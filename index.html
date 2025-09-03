@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Word of the Day</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     body {
       margin: 0;
@@ -48,6 +49,9 @@
       cursor: pointer;
       transition: 0.3s;
       font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .top-nav button:disabled {
@@ -107,9 +111,11 @@
       border-radius: 8px;
       cursor: pointer;
       transition: 0.3s;
-      margin-right: 10px;
       font-size: 14px;
       align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .like-section button:hover:enabled {
@@ -134,7 +140,7 @@
     .nav-buttons button {
       background: #2E8BC0;
       border: none;
-      padding: 15px 4px;
+      padding: 15px 40px;
       border-radius: 10px;
       color: #fff;
       font-size: 16px;
@@ -142,6 +148,10 @@
       transition: 0.3s;
       width: 120px;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
     }
 
     .nav-buttons button:hover {
@@ -171,6 +181,10 @@
       color: #555;
     }
 
+    .stats i {
+      color: #2E8BC0;
+    }
+
     .actions {
       display: flex;
       gap: 10px;
@@ -186,6 +200,9 @@
       cursor: pointer;
       transition: 0.3s;
       font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .actions button:hover:enabled {
@@ -270,6 +287,11 @@
       color: #fff;
       margin-top: 10px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .modal-content button:disabled {
@@ -319,10 +341,11 @@
   <div class="top-nav">
     <div class="left">
       <span class="app-name">FlyTie</span>
-      <button id="phraseBtn" disabled onclick="showSection('phrase')">Phrase</button>
-      <button id="quizBtn" onclick="showSection('quiz')">Quiz</button>
+      <button id="phraseBtn" disabled onclick="showSection('phrase')" aria-label="View Phrase"><i class="fas fa-quote-left"></i></button>
+      <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fas fa-question-circle"></i></button>
+      <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i> </button>
     </div>
-    <button onclick="globalShare()"> ↗️ </button>
+    <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fa-solid fa-paper-plane"></i></button>
   </div>
 
   <!-- Main Content -->
@@ -333,15 +356,15 @@
         <h2 id="phraseText">Loading...</h2>
         <p><strong>Meaning:</strong> <span id="meaningText">Loading...</span></p>
         <p><strong>Usage:</strong> <span id="usageText">Loading...</span></p>
-       <!-- Navigation -->
-       <div class="nav-buttons">
-          <button onclick="prevPhrase()">Previous</button>
-          <button onclick="nextPhrase()">Next</button>
+        <!-- Navigation -->
+        <div class="nav-buttons">
+          <button onclick="prevPhrase()" aria-label="Previous Phrase"><i class="fa-solid fa-square-caret-left"></i></button>
+          <button onclick="nextPhrase()" aria-label="Next Phrase"><i class="fa-solid fa-square-caret-right"></i></button>
         </div>
         <div class="like-section">
           <div>
             <span>Did you find this interesting?</span>
-            <button id="likeBtn">Like</button>
+            <button id="likeBtn" aria-label="Like this phrase"><i class="fas fa-heart"></i> Like</button>
           </div>
           <div>Total likes for this phrase: <span id="phraseLikeCount">0</span></div>
         </div>
@@ -363,11 +386,11 @@
     <div class="comments">
       <div class="comments-header">
         <div class="stats">
-          💬 <span id="commentCount">0</span>
+          <i class="fas fa-comment"></i> <span id="commentCount">0</span>
         </div>
         <div class="actions">
           <span>Like FlyTie?</span>
-          <button id="commentBtn">Comment</button>
+          <button id="commentBtn" aria-label="Add a Comment"><i class="fas fa-comment"></i> Comment</button>
         </div>
       </div>
       <div id="commentForm" style="display:none; margin-bottom:15px;">
@@ -389,7 +412,16 @@
         <div class="progress-fill" id="progressFill"></div>
       </div>
       <button id="okBtn" onclick="closePopup()">OK</button>
-      <button id="shareBtn" style="display:none;" onclick="shareResult()">↗ Share</button>
+      <button id="shareBtn" style="display:none;" onclick="shareResult()" aria-label="Share Quiz Result"><i class="fas fa-share"></i></button>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div class="modal" id="infoPopup">
+    <div class="modal-content">
+      <h2 style="font-family: 'Montserrat', sans-serif; color: #2E8BC0;">About FlyTie</h2>
+      <p>FlyTie helps you learn trendy professional phrases to boost your workplace communication. Explore daily phrases, test your knowledge with fun quizzes, like your favorites, and share your progress!</p>
+      <button onclick="closeInfoPopup()">OK</button>
     </div>
   </div>
 
@@ -544,6 +576,14 @@
       }
     }
 
+    function showInfo() {
+      document.getElementById('infoPopup').style.display = 'flex';
+    }
+
+    function closeInfoPopup() {
+      document.getElementById('infoPopup').style.display = 'none';
+    }
+
     function updateQuiz() {
       if (quizzes.length === 0 || phrases.length === 0) return;
       let p = phrases[currentIndex];
@@ -666,7 +706,7 @@
         if (data.status === 'success') {
           let newComment = document.createElement('div');
           newComment.className = 'comment';
-          newComment.innerHTML = `<strong>${username}:</strong> ${c.comment}`;
+          newComment.innerHTML = `<strong>${username}:</strong> ${comment}`;
           let commentList = document.getElementById('commentList');
           commentList.insertBefore(newComment, commentList.firstChild);
           while (commentList.children.length > 3) {
