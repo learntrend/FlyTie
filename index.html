@@ -103,6 +103,12 @@
       text-align: left;
     }
 
+    .like-section .like-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .like-section button {
       background: #fff;
       color: #2E8BC0;
@@ -112,7 +118,6 @@
       cursor: pointer;
       transition: 0.3s;
       font-size: 14px;
-      align-self: flex-start;
       display: flex;
       align-items: center;
       gap: 5px;
@@ -279,6 +284,12 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
 
+    .modal-content ul {
+      text-align: left;
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
     .modal-content button {
       background: #2E8BC0;
       border: none;
@@ -342,10 +353,10 @@
     <div class="left">
       <span class="app-name">FlyTie</span>
       <button id="phraseBtn" disabled onclick="showSection('phrase')" aria-label="View Phrase"><i class="fas fa-quote-left"></i></button>
-      <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fas fa-question-circle"></i></button>
+      <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fa-solid fa-dice"></i></button>
       <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i> </button>
     </div>
-    <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fa-solid fa-paper-plane"></i></button>
+    <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fas fa-share"></i></button>
   </div>
 
   <!-- Main Content -->
@@ -358,11 +369,11 @@
         <p><strong>Usage:</strong> <span id="usageText">Loading...</span></p>
         <!-- Navigation -->
         <div class="nav-buttons">
-          <button onclick="prevPhrase()" aria-label="Previous Phrase"><i class="fa-solid fa-square-caret-left"></i></button>
-          <button onclick="nextPhrase()" aria-label="Next Phrase"><i class="fa-solid fa-square-caret-right"></i></button>
+          <button onclick="prevPhrase()" aria-label="Previous Phrase"><i class="fas fa-chevron-left"></i></button>
+          <button onclick="nextPhrase()" aria-label="Next Phrase"><i class="fas fa-chevron-right"></i></button>
         </div>
         <div class="like-section">
-          <div>
+          <div class="like-row">
             <span>Did you find this interesting?</span>
             <button id="likeBtn" aria-label="Like this phrase"><i class="fas fa-heart"></i> Like</button>
           </div>
@@ -420,7 +431,13 @@
   <div class="modal" id="infoPopup">
     <div class="modal-content">
       <h2 style="font-family: 'Montserrat', sans-serif; color: #2E8BC0;">About FlyTie</h2>
-      <p>FlyTie helps you learn trendy professional phrases to boost your workplace communication. Explore daily phrases, test your knowledge with fun quizzes, like your favorites, and share your progress!</p>
+      <ul>
+        <li>Learn new professional phrases daily</li>
+        <li>Test your knowledge with fun quizzes</li>
+        <li>Like your favorite phrases</li>
+        <li>Share your quiz results</li>
+        <li>Add comments to connect with others</li>
+      </ul>
       <button onclick="closeInfoPopup()">OK</button>
     </div>
   </div>
