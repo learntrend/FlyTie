@@ -1,0 +1,57 @@
+function doGet(e) {
+  var action = e.parameter.action;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  if (action === 'getComments') {
+    var sheet = ss.getSheetByName("Comments");
+    var data = sheet.getDataRange().getValues();
+    var comments = [];
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] && data[i][1]) {
+        comments.push({ username: data[i][0], comment: data[i][1] });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ comments: comments }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } else if (action === 'getLikes' && e.parameter.phrase) {
+    var sheet = ss.getSheetByName("Likes");
+    var data = sheet.getDataRange().getValues();
+    var phrase = decodeURIComponent(e.parameter.phrase);
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === phrase) {
+        return ContentService.createTextOutput(JSON.stringify({ likes: data[i][1] || 0 }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ likes: 0 }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  var action = e.parameter.action;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  if (action === 'addLike' && e.parameter.phrase) {
+    var sheet = ss.getSheetByName("Likes");
+    var phrase = decodeURIComponent(e.parameter.phrase);
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === phrase) {
+        var currentLikes = data[i][1] || 0;
+        sheet.getRange(i + 1, 2).setValue(currentLikes + 1);
+        return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    sheet.appendRow([phrase, 1]);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } else {
+    var sheet = ss.getSheetByName("Comments");
+    var data = JSON.parse(e.postData.contents);
+    sheet.appendRow([data.username, data.comment]);
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
