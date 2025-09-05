@@ -187,7 +187,7 @@
     }
 
     .stats i {
-      color: #2E8BC0;
+      color: #666;
     }
 
     .actions {
@@ -238,6 +238,37 @@
       color: #145DA0;
     }
 
+    .comment-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+
+    .comment-actions button {
+      background: #fff;
+      color: #2E8BC0;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .comment-actions button:hover:enabled {
+      background: #145DA0;
+      color: #fff;
+    }
+
+    .comment-actions button:disabled {
+      background: #ccc;
+      color: #666;
+      cursor: not-allowed;
+    }
+
     /* Quiz buttons */
     .quiz-option {
       background: #2E8BC0;
@@ -282,6 +313,7 @@
       text-align: center;
       width: 300px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      position: relative;
     }
 
     .modal-content ul {
@@ -290,25 +322,56 @@
       padding-left: 20px;
     }
 
+    .modal-content .button-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
     .modal-content button {
       background: #2E8BC0;
       border: none;
-      padding: 10px 15px;
+      padding: 10px 30px;
       border-radius: 8px;
       color: #fff;
-      margin-top: 10px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 5px;
-      margin-left: auto;
-      margin-right: auto;
     }
 
     .modal-content button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
+    }
+
+    .modal-content a.share-icon {
+      color: #2E8BC0;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      text-decoration: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: none;
+    }
+
+    .modal-content a.share-icon:hover {
+      color: #145DA0;
+    }
+
+    .modal-content .share-text {
+      position: absolute;
+      top: 12px;
+      right: 35px;
+      font-size: 12px;
+      font-style: italic;
+      color: #555;
+      display: none;
     }
 
     .progress-bar {
@@ -325,6 +388,13 @@
       width: 0;
       background: #2E8BC0;
       transition: width 5s linear;
+    }
+
+    .modal-content input, .modal-content textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
     }
 
     /* Responsive */
@@ -356,7 +426,7 @@
       <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fa-solid fa-dice"></i></button>
       <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i> </button>
     </div>
-    <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fas fa-share"></i></button>
+    <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
   </div>
 
   <!-- Main Content -->
@@ -401,13 +471,8 @@
         </div>
         <div class="actions">
           <span>Like FlyTie?</span>
-          <button id="commentBtn" aria-label="Add a Comment"><i class="fas fa-comment"></i> Comment</button>
+          <button id="commentBtn" aria-label="Add a Comment">Comment</button>
         </div>
-      </div>
-      <div id="commentForm" style="display:none; margin-bottom:15px;">
-        <input id="username" type="text" placeholder="Your name" style="width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box;">
-        <textarea id="commentText" placeholder="Add a comment..." style="width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box;"></textarea>
-        <button onclick="submitComment()" style="background:#2E8BC0; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">Submit</button>
       </div>
       <div id="commentList" class="comment-list">
         <!-- Comments loaded dynamically -->
@@ -418,12 +483,15 @@
   <!-- Modals -->
   <div class="modal" id="popup">
     <div class="modal-content">
+      <span class="share-text">Share with your friends</span>
+      <a id="shareBtn" class="share-icon" onclick="shareResult()" aria-label="Share Quiz Result"><i class="fa-solid fa-arrow-up-from-bracket"></i></a>
       <p id="popupMessage"></p>
       <div class="progress-bar" id="progressBar" style="display:none;">
         <div class="progress-fill" id="progressFill"></div>
       </div>
-      <button id="okBtn" onclick="closePopup()">OK</button>
-      <button id="shareBtn" style="display:none;" onclick="shareResult()" aria-label="Share Quiz Result"><i class="fas fa-share"></i></button>
+      <div class="button-row">
+        <button id="okBtn" onclick="closePopup()">OK</button>
+      </div>
     </div>
   </div>
 
@@ -442,11 +510,38 @@
     </div>
   </div>
 
+  <!-- Comment Modal -->
+  <div class="modal" id="commentPopup">
+    <div class="modal-content">
+      <h2 style="font-family: 'Montserrat', sans-serif; color: #2E8BC0;">Add a Comment</h2>
+      <input id="username" type="text" placeholder="Your name">
+      <textarea id="commentText" placeholder="Add a comment..."></textarea>
+      <div class="button-row">
+        <button onclick="submitComment()">Submit</button>
+        <button onclick="closeCommentPopup()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reply Modal -->
+  <div class="modal" id="replyPopup">
+    <div class="modal-content">
+      <h2 style="font-family: 'Montserrat', sans-serif; color: #2E8BC0;">Reply to Comment</h2>
+      <input id="replyUsername" type="text" placeholder="Your name">
+      <textarea id="replyText" placeholder="Add a reply..."></textarea>
+      <div class="button-row">
+        <button onclick="submitReply()">Submit</button>
+        <button onclick="closeReplyPopup()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let quizStartTime = null;
     let phrases = [];
     let quizzes = [];
     let currentIndex = 0;
+    let currentCommentId = null;
 
     const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
     const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
@@ -533,7 +628,14 @@
         comments.forEach(c => {
           let newComment = document.createElement('div');
           newComment.className = 'comment';
-          newComment.innerHTML = `<strong>${c.username}:</strong> ${c.comment}`;
+          newComment.dataset.commentId = c.id;
+          newComment.innerHTML = `
+            <strong>${c.username}:</strong> ${c.comment}
+            <div class="comment-actions">
+              <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+              <button onclick="likeComment('${c.id}')" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
+            </div>
+          `;
           commentList.appendChild(newComment);
         });
         document.getElementById('commentCount').textContent = data.comments.length;
@@ -627,6 +729,7 @@
       const popup = document.getElementById("popup");
       const message = document.getElementById("popupMessage");
       const shareBtn = document.getElementById("shareBtn");
+      const shareText = document.querySelector(".modal-content .share-text");
       const okBtn = document.getElementById("okBtn");
       const progressBar = document.getElementById("progressBar");
       const progressFill = document.getElementById("progressFill");
@@ -634,14 +737,16 @@
       if (isCorrect) {
         let endTime = new Date();
         let timeTaken = ((endTime - quizStartTime) / 1000).toFixed(2);
-        message.textContent = `🎉 Correct! You answered in ${timeTaken} seconds.`;
+        message.innerHTML = `Wohoo, Correct! 🎉<br>You answered in ${timeTaken} seconds.`;
         shareBtn.style.display = "inline-block";
+        shareText.style.display = "inline-block";
         shareBtn.dataset.time = timeTaken;
         okBtn.disabled = false;
         progressBar.style.display = "none";
       } else {
-        message.textContent = "❌ Incorrect, try again in 5 seconds!";
+        message.innerHTML = `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
         shareBtn.style.display = "none";
+        shareText.style.display = "none";
         okBtn.disabled = true;
         progressBar.style.display = "block";
         progressFill.style.width = "0";
@@ -656,6 +761,28 @@
 
     function closePopup() {
       document.getElementById("popup").style.display = "none";
+    }
+
+    function showCommentPopup() {
+      document.getElementById('commentPopup').style.display = 'flex';
+      document.getElementById('username').value = '';
+      document.getElementById('commentText').value = '';
+    }
+
+    function closeCommentPopup() {
+      document.getElementById('commentPopup').style.display = 'none';
+    }
+
+    function showReplyPopup(commentId) {
+      currentCommentId = commentId;
+      document.getElementById('replyPopup').style.display = 'flex';
+      document.getElementById('replyUsername').value = '';
+      document.getElementById('replyText').value = '';
+    }
+
+    function closeReplyPopup() {
+      document.getElementById('replyPopup').style.display = 'none';
+      currentCommentId = null;
     }
 
     function shareResult() {
@@ -704,7 +831,7 @@
     };
 
     document.getElementById('commentBtn').onclick = function() {
-      document.getElementById('commentForm').style.display = 'block';
+      showCommentPopup();
     };
 
     async function submitComment() {
@@ -723,7 +850,14 @@
         if (data.status === 'success') {
           let newComment = document.createElement('div');
           newComment.className = 'comment';
-          newComment.innerHTML = `<strong>${username}:</strong> ${comment}`;
+          newComment.dataset.commentId = data.id;
+          newComment.innerHTML = `
+            <strong>${username}:</strong> ${comment}
+            <div class="comment-actions">
+              <button onclick="showReplyPopup('${data.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+              <button onclick="likeComment('${data.id}')" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
+            </div>
+          `;
           let commentList = document.getElementById('commentList');
           commentList.insertBefore(newComment, commentList.firstChild);
           while (commentList.children.length > 3) {
@@ -731,14 +865,72 @@
           }
           let ccount = parseInt(document.getElementById('commentCount').textContent);
           document.getElementById('commentCount').textContent = ccount + 1;
-          document.getElementById('username').value = '';
-          document.getElementById('commentText').value = '';
-          document.getElementById('commentForm').style.display = 'none';
+          closeCommentPopup();
         } else {
           alert('Error adding comment.');
         }
       } catch (e) {
         alert('Error: ' + e.message);
+      }
+    }
+
+    async function submitReply() {
+      let username = document.getElementById('replyUsername').value.trim();
+      let reply = document.getElementById('replyText').value.trim();
+      if (!username || !reply || !currentCommentId) {
+        alert('Please enter your name and reply.');
+        return;
+      }
+      try {
+        let res = await fetch(COMMENT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ username, comment: reply, parentId: currentCommentId })
+        });
+        let data = await res.json();
+        if (data.status === 'success') {
+          let newComment = document.createElement('div');
+          newComment.className = 'comment';
+          newComment.dataset.commentId = data.id;
+          newComment.innerHTML = `
+            <strong>${username}:</strong> ${reply}
+            <div class="comment-actions">
+              <button onclick="showReplyPopup('${data.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+              <button onclick="likeComment('${data.id}')" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
+            </div>
+          `;
+          let commentList = document.getElementById('commentList');
+          commentList.insertBefore(newComment, commentList.firstChild);
+          while (commentList.children.length > 3) {
+            commentList.removeChild(commentList.lastChild);
+          }
+          let ccount = parseInt(document.getElementById('commentCount').textContent);
+          document.getElementById('commentCount').textContent = ccount + 1;
+          closeReplyPopup();
+        } else {
+          alert('Error adding reply.');
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    async function likeComment(commentId) {
+      let button = document.querySelector(`.comment[data-comment-id="${commentId}"] button[aria-label="Like this comment"]`);
+      button.disabled = true;
+      try {
+        let res = await fetch(`${COMMENT_URL}?action=addCommentLike&commentId=${encodeURIComponent(commentId)}`, { method: 'POST' });
+        let data = await res.json();
+        if (data.status === 'success') {
+          let likeCountSpan = button.querySelector('.like-count');
+          let count = parseInt(likeCountSpan.textContent);
+          likeCountSpan.textContent = count + 1;
+        } else {
+          alert('Error adding comment like.');
+          button.disabled = false;
+        }
+      } catch (e) {
+        alert('Error: ' + e.message);
+        button.disabled = false;
       }
     }
 
