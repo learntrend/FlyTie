@@ -269,6 +269,13 @@
       cursor: not-allowed;
     }
 
+    .reply {
+      margin-left: 20px;
+      margin-top: 8px;
+      padding: 8px;
+      border-left: 2px solid #2E8BC0;
+    }
+
     .pagination {
       display: flex;
       justify-content: center;
@@ -338,7 +345,7 @@
       background: white;
       padding: 20px;
       border-radius: 10px;
-      text-align: left;
+      text-align: center;
       width: 90%;
       max-width: 280px;
       min-height: 200px;
@@ -685,13 +692,27 @@
           let newComment = document.createElement('div');
           newComment.className = 'comment';
           newComment.dataset.commentId = c.id;
-          newComment.innerHTML = `
+          let commentHTML = `
             <strong>${c.username}:</strong> ${c.comment}
             <div class="comment-actions">
               <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-              <button onclick="likeComment('${c.id}')" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
+              <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
             </div>
           `;
+          if (c.replies && c.replies.length > 0) {
+            c.replies.forEach(r => {
+              commentHTML += `
+                <div class="reply" data-comment-id="${r.id}">
+                  ${r.reply}
+                  <div class="comment-actions">
+                    <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+                    <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply"><i class="fas fa-heart"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
+                  </div>
+                </div>
+              `;
+            });
+          }
+          newComment.innerHTML = commentHTML;
           commentList.appendChild(newComment);
         });
         document.getElementById('commentCount').textContent = data.comments.length;
@@ -917,7 +938,8 @@
       try {
         let res = await fetch(COMMENT_URL, {
           method: 'POST',
-          body: JSON.stringify({ username, comment })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timestamp: new Date().toISOString(), username, comment })
         });
         let data = await res.json();
         if (data.status === 'success') {
@@ -928,7 +950,7 @@
             <strong>${username}:</strong> ${comment}
             <div class="comment-actions">
               <button onclick="showReplyPopup('${data.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-              <button onclick="likeComment('${data.id}')" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
+              <button onclick="likeComment('${data.id}', false)" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
             </div>
           `;
           let commentList = document.getElementById('commentList');
@@ -955,27 +977,25 @@
         return;
       }
       try {
-        let res = await fetch(COMMENT_URL, {
+        let res = await fetch(`${COMMENT_URL}?action=addReply`, {
           method: 'POST',
-          body: JSON.stringify({ username, comment: reply, parentId: currentCommentId })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ timestamp: new Date().toISOString(), username, comment: reply, parentId: currentCommentId })
         });
         let data = await res.json();
         if (data.status === 'success') {
-          let newComment = document.createElement('div');
-          newComment.className = 'comment';
-          newComment.dataset.commentId = data.id;
-          newComment.innerHTML = `
-            <strong>${username}:</strong> ${reply}
+          let newReply = document.createElement('div');
+          newReply.className = 'reply';
+          newReply.dataset.commentId = data.id;
+          newReply.innerHTML = `
+            ${username}: ${reply}
             <div class="comment-actions">
-              <button onclick="showReplyPopup('${data.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-              <button onclick="likeComment('${data.id}')" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
+              <button onclick="showReplyPopup('${currentCommentId}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+              <button onclick="likeComment('${data.id}', true)" aria-label="Like this reply"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
             </div>
           `;
-          let commentList = document.getElementById('commentList');
-          commentList.insertBefore(newComment, commentList.firstChild);
-          while (commentList.children.length > commentsPerPage) {
-            commentList.removeChild(commentList.lastChild);
-          }
+          let parentComment = document.querySelector(`.comment[data-comment-id="${currentCommentId}"]`);
+          parentComment.appendChild(newReply);
           let ccount = parseInt(document.getElementById('commentCount').textContent);
           document.getElementById('commentCount').textContent = ccount + 1;
           closeReplyPopup();
@@ -987,21 +1007,26 @@
       }
     }
 
-    async function likeComment(commentId) {
-      let button = document.querySelector(`.comment[data-comment-id="${commentId}"] button[aria-label="Like this comment"]`);
+    async function likeComment(commentId, isReply) {
+      let button = document.querySelector(`[data-comment-id="${commentId}"] button[aria-label="${isReply ? 'Like this reply' : 'Like this comment'}"]`);
       button.disabled = true;
       try {
-        let res = await fetch(`${COMMENT_URL}?action=addCommentLike&commentId=${encodeURIComponent(commentId)}`, { method: 'POST' });
+        let res = await fetch(`${COMMENT_URL}?action=addCommentLike&commentId=${encodeURIComponent(commentId)}&isReply=${isReply}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
         if (data.status === 'success') {
           let likeCountSpan = button.querySelector('.like-count');
           let count = parseInt(likeCountSpan.textContent);
           likeCountSpan.textContent = count + 1;
         } else {
-          alert('Error adding comment like.');
+          alert('Error adding comment like: ' + (data.message || 'Unknown error'));
           button.disabled = false;
         }
       } catch (e) {
+        console.error('Error liking comment:', e);
         alert('Error: ' + e.message);
         button.disabled = false;
       }
