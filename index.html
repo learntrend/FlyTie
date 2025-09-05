@@ -222,7 +222,7 @@
     }
 
     .comment-list {
-      max-height: 150px;
+      max-height: 400px;
       overflow-y: auto;
       margin-bottom: 12px;
     }
@@ -269,6 +269,34 @@
       cursor: not-allowed;
     }
 
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .pagination button {
+      background: #2E8BC0;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 14px;
+    }
+
+    .pagination button:disabled {
+      background: #ccc;
+      color: #666;
+      cursor: not-allowed;
+    }
+
+    .pagination button:hover:enabled {
+      background: #145DA0;
+    }
+
     /* Quiz buttons */
     .quiz-option {
       background: #2E8BC0;
@@ -308,18 +336,22 @@
 
     .modal-content {
       background: white;
-      padding: 20px;
+      padding: 40px;
       border-radius: 10px;
-      text-align: center;
-      width: 300px;
+      text-align: left;
+      width: 80%;
+      max-width: 300px;
+      min-height: 300px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       position: relative;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .modal-content ul {
-      text-align: left;
-      margin: 10px 0;
-      padding-left: 20px;
+    .modal-content p.tick-item::before {
+      content: '✔';
+      color: #2E8BC0;
+      margin-right: 8px;
     }
 
     .modal-content .button-row {
@@ -333,13 +365,14 @@
     .modal-content button {
       background: #2E8BC0;
       border: none;
-      padding: 10px 30px;
+      padding: 8px 26px;
       border-radius: 8px;
       color: #fff;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 5px;
+      font-size: 14px;
     }
 
     .modal-content button:disabled {
@@ -372,6 +405,7 @@
       font-style: italic;
       color: #555;
       display: none;
+      margin-bottom: 20px;
     }
 
     .progress-bar {
@@ -477,6 +511,10 @@
       <div id="commentList" class="comment-list">
         <!-- Comments loaded dynamically -->
       </div>
+      <div class="pagination">
+        <button id="prevComments" onclick="prevCommentsPage()" disabled>Previous</button>
+        <button id="nextComments" onclick="nextCommentsPage()">Next</button>
+      </div>
     </div>
   </div>
 
@@ -499,13 +537,11 @@
   <div class="modal" id="infoPopup">
     <div class="modal-content">
       <h2 style="font-family: 'Montserrat', sans-serif; color: #2E8BC0;">About FlyTie</h2>
-      <ul>
-        <li>Learn new professional phrases daily</li>
-        <li>Test your knowledge with fun quizzes</li>
-        <li>Like your favorite phrases</li>
-        <li>Share your quiz results</li>
-        <li>Add comments to connect with others</li>
-      </ul>
+      <p class="tick-item">Learn new professional phrases daily</p>
+      <p class="tick-item">Test your knowledge with fun quizzes</p>
+      <p class="tick-item">Like your favorite phrases</p>
+      <p class="tick-item">Share your quiz results with your friends</p>
+      <p class="tick-item">Add comments to connect with others</p>
       <button onclick="closeInfoPopup()">OK</button>
     </div>
   </div>
@@ -542,6 +578,8 @@
     let quizzes = [];
     let currentIndex = 0;
     let currentCommentId = null;
+    let currentCommentPage = 0;
+    const commentsPerPage = 10;
 
     const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
     const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
@@ -618,13 +656,15 @@
       }
     }
 
-    async function loadComments() {
+    async function loadComments(page = 0) {
       try {
         let res = await fetch(`${COMMENT_URL}?action=getComments`);
         let data = await res.json();
         let commentList = document.getElementById('commentList');
         commentList.innerHTML = '';
-        let comments = data.comments.slice(0, 3);
+        let start = page * commentsPerPage;
+        let end = start + commentsPerPage;
+        let comments = data.comments.slice(start, end);
         comments.forEach(c => {
           let newComment = document.createElement('div');
           newComment.className = 'comment';
@@ -639,9 +679,23 @@
           commentList.appendChild(newComment);
         });
         document.getElementById('commentCount').textContent = data.comments.length;
+        document.getElementById('prevComments').disabled = page === 0;
+        document.getElementById('nextComments').disabled = end >= data.comments.length;
       } catch (e) {
         console.error('Error loading comments:', e);
       }
+    }
+
+    function prevCommentsPage() {
+      if (currentCommentPage > 0) {
+        currentCommentPage--;
+        loadComments(currentCommentPage);
+      }
+    }
+
+    function nextCommentsPage() {
+      currentCommentPage++;
+      loadComments(currentCommentPage);
     }
 
     async function loadPhraseLikes() {
@@ -860,7 +914,7 @@
           `;
           let commentList = document.getElementById('commentList');
           commentList.insertBefore(newComment, commentList.firstChild);
-          while (commentList.children.length > 3) {
+          while (commentList.children.length > commentsPerPage) {
             commentList.removeChild(commentList.lastChild);
           }
           let ccount = parseInt(document.getElementById('commentCount').textContent);
@@ -900,7 +954,7 @@
           `;
           let commentList = document.getElementById('commentList');
           commentList.insertBefore(newComment, commentList.firstChild);
-          while (commentList.children.length > 3) {
+          while (commentList.children.length > commentsPerPage) {
             commentList.removeChild(commentList.lastChild);
           }
           let ccount = parseInt(document.getElementById('commentCount').textContent);
