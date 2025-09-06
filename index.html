@@ -935,11 +935,15 @@
         alert('Please enter your name and comment.');
         return;
       }
+      let formData = new URLSearchParams();
+      formData.append('action', 'addComment');
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('username', username);
+      formData.append('comment', comment);
       try {
         let res = await fetch(COMMENT_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ timestamp: new Date().toISOString(), username, comment })
+          body: formData
         });
         let data = await res.json();
         if (data.status === 'success') {
@@ -976,11 +980,16 @@
         alert('Please enter your name and reply.');
         return;
       }
+      let formData = new URLSearchParams();
+      formData.append('action', 'addReply');
+      formData.append('timestamp', new Date().toISOString());
+      formData.append('username', username);
+      formData.append('comment', reply);
+      formData.append('parentId', currentCommentId);
       try {
-        let res = await fetch(`${COMMENT_URL}?action=addReply`, {
+        let res = await fetch(COMMENT_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ timestamp: new Date().toISOString(), username, comment: reply, parentId: currentCommentId })
+          body: formData
         });
         let data = await res.json();
         if (data.status === 'success') {
@@ -1012,8 +1021,7 @@
       button.disabled = true;
       try {
         let res = await fetch(`${COMMENT_URL}?action=addCommentLike&commentId=${encodeURIComponent(commentId)}&isReply=${isReply}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          method: 'POST'
         });
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
