@@ -629,6 +629,7 @@
     async function loadPhrases() {
       try {
         let res = await fetch(PHRASES_CSV_URL);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let text = await res.text();
         let lines = text.split(/\r?\n/);
         phrases = [];
@@ -648,6 +649,7 @@
         showPhrase();
         loadPhraseLikes();
       } catch (e) {
+        console.error('Error loading phrases:', e);
         document.getElementById("phraseText").textContent = "Error loading phrases.";
       }
     }
@@ -655,6 +657,7 @@
     async function loadQuizzes() {
       try {
         let res = await fetch(QUIZ_CSV_URL);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let text = await res.text();
         let lines = text.split(/\r?\n/);
         quizzes = [];
@@ -675,6 +678,7 @@
         }
         updateQuiz();
       } catch (e) {
+        console.error('Error loading quizzes:', e);
         document.getElementById("quizTitle").textContent = "Error loading quiz.";
       }
     }
@@ -682,7 +686,9 @@
     async function loadComments(page = 0) {
       try {
         let res = await fetch(`${COMMENT_URL}?action=getComments`);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
+        if (data.status !== 'success') throw new Error(data.message || 'Failed to load comments');
         let commentList = document.getElementById('commentList');
         commentList.innerHTML = '';
         let start = page * commentsPerPage;
@@ -720,6 +726,7 @@
         document.getElementById('nextComments').disabled = end >= data.comments.length;
       } catch (e) {
         console.error('Error loading comments:', e);
+        alert('Error loading comments: ' + e.message);
       }
     }
 
@@ -739,10 +746,13 @@
       try {
         let phrase = phrases[currentIndex]?.phrase || '';
         let res = await fetch(`${COMMENT_URL}?action=getLikes&phrase=${encodeURIComponent(phrase)}`);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
+        if (data.status !== 'success') throw new Error(data.message || 'Failed to load likes');
         document.getElementById('phraseLikeCount').textContent = data.likes || 0;
       } catch (e) {
         console.error('Error loading likes:', e);
+        alert('Error loading likes: ' + e.message);
       }
     }
 
@@ -909,17 +919,24 @@
       this.disabled = true;
       let phrase = phrases[currentIndex]?.phrase || '';
       try {
-        let res = await fetch(`${COMMENT_URL}?action=addLike&phrase=${encodeURIComponent(phrase)}`, { method: 'POST' });
+        let formData = new URLSearchParams();
+        formData.append('action', 'addLike');
+        formData.append('phrase', phrase);
+        let res = await fetch(COMMENT_URL, {
+          method: 'POST',
+          body: formData
+        });
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
         if (data.status === 'success') {
           let count = parseInt(document.getElementById('phraseLikeCount').textContent);
           document.getElementById('phraseLikeCount').textContent = count + 1;
         } else {
-          alert('Error adding like.');
-          this.disabled = false;
+          throw new Error(data.message || 'Failed to add like');
         }
       } catch (e) {
-        alert('Error: ' + e.message);
+        console.error('Error adding like:', e);
+        alert('Error adding like: ' + e.message);
         this.disabled = false;
       }
     };
@@ -935,16 +952,17 @@
         alert('Please enter your name and comment.');
         return;
       }
-      let formData = new URLSearchParams();
-      formData.append('action', 'addComment');
-      formData.append('timestamp', new Date().toISOString());
-      formData.append('username', username);
-      formData.append('comment', comment);
       try {
+        let formData = new URLSearchParams();
+        formData.append('action', 'addComment');
+        formData.append('timestamp', new Date().toISOString());
+        formData.append('username', username);
+        formData.append('comment', comment);
         let res = await fetch(COMMENT_URL, {
           method: 'POST',
           body: formData
         });
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
         if (data.status === 'success') {
           let newComment = document.createElement('div');
@@ -966,10 +984,11 @@
           document.getElementById('commentCount').textContent = ccount + 1;
           closeCommentPopup();
         } else {
-          alert('Error adding comment.');
+          throw new Error(data.message || 'Failed to add comment');
         }
       } catch (e) {
-        alert('Error: ' + e.message);
+        console.error('Error adding comment:', e);
+        alert('Error adding comment: ' + e.message);
       }
     }
 
@@ -980,17 +999,18 @@
         alert('Please enter your name and reply.');
         return;
       }
-      let formData = new URLSearchParams();
-      formData.append('action', 'addReply');
-      formData.append('timestamp', new Date().toISOString());
-      formData.append('username', username);
-      formData.append('comment', reply);
-      formData.append('parentId', currentCommentId);
       try {
+        let formData = new URLSearchParams();
+        formData.append('action', 'addReply');
+        formData.append('timestamp', new Date().toISOString());
+        formData.append('username', username);
+        formData.append('comment', reply);
+        formData.append('parentId', currentCommentId);
         let res = await fetch(COMMENT_URL, {
           method: 'POST',
           body: formData
         });
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
         if (data.status === 'success') {
           let newReply = document.createElement('div');
@@ -1009,10 +1029,11 @@
           document.getElementById('commentCount').textContent = ccount + 1;
           closeReplyPopup();
         } else {
-          alert('Error adding reply.');
+          throw new Error(data.message || 'Failed to add reply');
         }
       } catch (e) {
-        alert('Error: ' + e.message);
+        console.error('Error adding reply:', e);
+        alert('Error adding reply: ' + e.message);
       }
     }
 
@@ -1020,8 +1041,13 @@
       let button = document.querySelector(`[data-comment-id="${commentId}"] button[aria-label="${isReply ? 'Like this reply' : 'Like this comment'}"]`);
       button.disabled = true;
       try {
-        let res = await fetch(`${COMMENT_URL}?action=addCommentLike&commentId=${encodeURIComponent(commentId)}&isReply=${isReply}`, {
-          method: 'POST'
+        let formData = new URLSearchParams();
+        formData.append('action', 'addCommentLike');
+        formData.append('commentId', commentId);
+        formData.append('isReply', isReply);
+        let res = await fetch(COMMENT_URL, {
+          method: 'POST',
+          body: formData
         });
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let data = await res.json();
@@ -1030,12 +1056,11 @@
           let count = parseInt(likeCountSpan.textContent);
           likeCountSpan.textContent = count + 1;
         } else {
-          alert('Error adding comment like: ' + (data.message || 'Unknown error'));
-          button.disabled = false;
+          throw new Error(data.message || 'Failed to add comment like');
         }
       } catch (e) {
         console.error('Error liking comment:', e);
-        alert('Error: ' + e.message);
+        alert('Error liking comment: ' + e.message);
         button.disabled = false;
       }
     }
