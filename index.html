@@ -3,7 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phrase of the Day</title>
+  <title>Word of the Day</title>
+  <!-- Open Graph Meta Tags for Share Preview -->
+  <meta property="og:title" content="FlyTie - Phrase of the Day">
+  <meta property="og:description" content="Learn new professional phrases daily with FlyTie!">
+  <meta property="og:image" content="https://learntrend.github.io/images/logo.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="200">
+  <meta property="og:image:height" content="200">
+  <meta property="og:url" content="https://learntrend.github.io">
+  <meta property="og:type" content="website">
+  <!-- Favicon -->
+  <link rel="icon" href="images/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Open+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
@@ -918,7 +929,7 @@
     function globalShare() {
       if (navigator.share) {
         navigator.share({
-          title: 'FlyTie - Phrase of the Day',
+          title: 'FlyTie - Word of the Day',
           text: 'Check out today’s FlyTie Phrase of the Day!',
           url: window.location.href
         });
