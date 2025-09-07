@@ -33,10 +33,10 @@
       align-items: center;
     }
 
-    .app-name {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 20px;
-      font-weight: 600;
+    .app-logo {
+      height: 30px;
+      max-width: 150px;
+      object-fit: contain;
     }
 
     .top-nav button {
@@ -481,7 +481,7 @@
   <!-- Top Nav -->
   <div class="top-nav">
     <div class="left">
-      <span class="app-name">FlyTie</span>
+      <img src="images/logo.png" alt="FlyTie Logo" class="app-logo">
       <button id="phraseBtn" disabled onclick="showSection('phrase')" aria-label="View Phrase"><i class="fas fa-quote-left"></i></button>
       <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fa-solid fa-dice"></i></button>
       <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i> </button>
