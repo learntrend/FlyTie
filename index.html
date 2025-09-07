@@ -498,6 +498,7 @@
     <!-- Phrase Section -->
     <div id="phraseSection">
       <div class="card">
+        <div class="quiz-header" id="phraseHeader" style="display:none;">Phrase of the Day</div>
         <h2 id="phraseText">Loading...</h2>
         <p><strong>Meaning:</strong> <span id="meaningText">Loading...</span></p>
         <p><strong>Usage:</strong> <span id="usageText">Loading...</span></p>
@@ -773,6 +774,7 @@
         document.getElementById("meaningText").textContent = p.meaning;
         document.getElementById("usageText").textContent = p.usage;
         document.getElementById('likeBtn').disabled = false;
+        document.getElementById('phraseHeader').style.display = currentIndex === 0 ? 'block' : 'none';
         loadPhraseLikes();
       }
     }
