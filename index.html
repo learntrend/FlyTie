@@ -903,7 +903,7 @@
       let timeTaken = shareBtn.dataset.time || "?";
       if (navigator.share) {
         navigator.share({
-          title: 'FlyTie - Word of the Day Quiz',
+          title: 'FlyTie - Phrase of the Day Quiz',
           text: `I just got the FlyTie quiz right in ${timeTaken} seconds! 🎉`,
           url: window.location.href
         });
@@ -916,7 +916,7 @@
       if (navigator.share) {
         navigator.share({
           title: 'FlyTie - Word of the Day',
-          text: 'Check out today’s FlyTie Word of the Day!',
+          text: 'Check out today’s FlyTie Phrase of the Day!',
           url: window.location.href
         });
       } else {
