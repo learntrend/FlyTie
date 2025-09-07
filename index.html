@@ -34,7 +34,7 @@
     }
 
     .app-logo {
-      height: 50px;
+      height: 30px;
       max-width: 150px;
       object-fit: contain;
     }
@@ -380,7 +380,7 @@
 
     .modal-content p.tick-item i {
       color: #2E8BC0;
-      margin-right: 20px;
+      margin-right: 8px;
     }
 
     .modal-content .button-row {
@@ -483,7 +483,7 @@
   <!-- Top Nav -->
   <div class="top-nav">
     <div class="left">
-      <img src="images/logo.png" alt="FlyTie Logo" class="app-logo">
+      <img src="assets/logo.png" alt="FlyTie Logo" class="app-logo">
       <button id="phraseBtn" disabled onclick="showSection('phrase')" aria-label="View Phrase"><i class="fas fa-quote-left"></i></button>
       <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fa-solid fa-dice"></i></button>
       <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i> </button>
@@ -902,8 +902,8 @@
       let timeTaken = shareBtn.dataset.time || "?";
       if (navigator.share) {
         navigator.share({
-          title: 'Word of the Day Quiz',
-          text: `I just got the quiz right in ${timeTaken} seconds! 🎉`,
+          title: 'FlyTie - Word of the Day Quiz',
+          text: `I just got the FlyTie quiz right in ${timeTaken} seconds! 🎉`,
           url: window.location.href
         });
       } else {
@@ -914,8 +914,8 @@
     function globalShare() {
       if (navigator.share) {
         navigator.share({
-          title: 'Word of the Day',
-          text: 'Check out today’s Word of the Day!',
+          title: 'FlyTie - Word of the Day',
+          text: 'Check out today’s FlyTie Word of the Day!',
           url: window.location.href
         });
       } else {
