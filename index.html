@@ -373,12 +373,14 @@
     .modal-content p.tick-item {
       text-align: left;
       margin-bottom: 4px;
+      padding-left: 15px;
+      display: flex;
+      align-items: center;
     }
 
-    .modal-content p.tick-item::before {
-      content: '✔';
+    .modal-content p.tick-item i {
       color: #2E8BC0;
-      margin-right: 8px;
+      margin-right: 20px;
     }
 
     .modal-content .button-row {
@@ -481,7 +483,7 @@
   <!-- Top Nav -->
   <div class="top-nav">
     <div class="left">
-      <img src="images/logo.png" alt="FlyTie Logo" class="app-logo">
+      <img src="assets/logo.png" alt="FlyTie Logo" class="app-logo">
       <button id="phraseBtn" disabled onclick="showSection('phrase')" aria-label="View Phrase"><i class="fas fa-quote-left"></i></button>
       <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fa-solid fa-dice"></i></button>
       <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i> </button>
@@ -564,11 +566,11 @@
   <div class="modal" id="infoPopup">
     <div class="modal-content">
       <div class="banner">About FlyTie</div>
-      <p class="tick-item">Learn new professional phrases daily</p>
-      <p class="tick-item">Test your knowledge with fun quizzes</p>
-      <p class="tick-item">Like your favorite phrases</p>
-      <p class="tick-item">Share your quiz results with your friends</p>
-      <p class="tick-item">Add comments to connect with others</p>
+      <p class="tick-item"><i class="fa-solid fa-quote-left"></i> Learn new professional phrases daily</p>
+      <p class="tick-item"><i class="fa-solid fa-brain"></i> Test your knowledge with fun quizzes</p>
+      <p class="tick-item"><i class="fa-solid fa-heart"></i> Like your favorite phrases</p>
+      <p class="tick-item"><i class="fa-solid fa-user-group"></i> Share your quiz results with your friends</p>
+      <p class="tick-item"><i class="fa-solid fa-comment"></i> Add comments to connect with others</p>
       <div class="button-row">
         <button onclick="closeInfoPopup()">OK</button>
       </div>
