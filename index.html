@@ -43,6 +43,7 @@
       display: flex;
       gap: 05px;
       align-items: center;
+      position: relative;
     }
 
     .app-logo {
@@ -66,6 +67,21 @@
       gap: 5px;
     }
 
+    /* Specific styles for logo button to remove padding and button styling */
+    #logoBtn {
+      padding: 0;
+      background: none;
+      border: none;
+      border-radius: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    #logoBtn:hover:enabled {
+      background: none;
+    }
+
     .top-nav button:disabled {
       background: #ccc;
       color: #666;
@@ -73,6 +89,32 @@
     }
 
     .top-nav button:hover:enabled {
+      background: #145DA0;
+      color: #fff;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+      min-width: 150px;
+    }
+
+    .dropdown-menu button {
+      width: 100%;
+      text-align: left;
+      border-radius: 0;
+      padding: 10px 15px;
+      font-size: 14px;
+      font-weight: normal;
+    }
+
+    .dropdown-menu button:hover {
       background: #145DA0;
       color: #fff;
     }
@@ -103,6 +145,32 @@
 
     .card p {
       padding: 10px;
+    }
+
+    .bookmark-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #fff;
+      color: #2E8BC0;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .bookmark-btn:hover:enabled {
+      background: #145DA0;
+      color: #fff;
+    }
+
+    .bookmark-btn.bookmarked i {
+      color: #2E8BC0;
     }
 
     .like-section {
@@ -472,6 +540,24 @@
       box-sizing: border-box;
     }
 
+    .liked-phrases-list button {
+      background: #2E8BC0;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 8px;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 14px;
+    }
+
+    .liked-phrases-list button:hover {
+      background: #145DA0;
+    }
+
     /* Responsive */
     @media(max-width: 768px) {
       .top-nav {
@@ -489,6 +575,10 @@
       .like-section {
         margin-top: 20px;
       }
+      .dropdown-menu {
+        right: 10px;
+        min-width: 120px;
+      }
     }
   </style>
 </head>
@@ -496,10 +586,17 @@
   <!-- Top Nav -->
   <div class="top-nav">
     <div class="left">
-      <img src="images/logo.png" alt="FlyTie Logo" class="app-logo">
-      <button id="phraseBtn" disabled onclick="showSection('phrase')" aria-label="View Phrase"><i class="fas fa-quote-left"></i></button>
+      <button id="logoBtn" onclick="showSection('phrase')" aria-label="View Phrases">
+        <img src="images/logo.png" alt="FlyTie Logo" class="app-logo">
+      </button>
       <button id="quizBtn" onclick="showSection('quiz')" aria-label="View Quiz"><i class="fa-solid fa-dice"></i></button>
-      <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i> </button>
+      <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i></button>
+      <button id="dropdownBtn" onclick="toggleDropdown()" aria-label="More Options"><i class="fa-solid fa-caret-down"></i></button>
+      <div id="dropdownMenu" class="dropdown-menu">
+        <button onclick="showStreakPopup()">Streak</button>
+        <button onclick="showLikedPhrasesPopup()">Liked Phrases</button>
+        <button onclick="showBookmarkPopup()">Bookmarked Phrase</button>
+      </div>
     </div>
     <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
   </div>
@@ -509,6 +606,7 @@
     <!-- Phrase Section -->
     <div id="phraseSection">
       <div class="card">
+        <button id="bookmarkBtn" class="bookmark-btn" onclick="toggleBookmark()" aria-label="Bookmark this phrase"><i class="fa-regular fa-bookmark"></i></button>
         <div class="quiz-header" id="phraseHeader" style="display:none;">Phrase of the Day</div>
         <h2 id="phraseText">Loading...</h2>
         <p><strong>Meaning:</strong> <span id="meaningText">Loading...</span></p>
@@ -617,6 +715,42 @@
     </div>
   </div>
 
+  <!-- Streak Modal -->
+  <div class="modal" id="streakPopup">
+    <div class="modal-content">
+      <div class="banner">Your Streak</div>
+      <p id="streakMessage">Your Streak: 0 days 🔥</p>
+      <div class="button-row">
+        <button onclick="closeStreakPopup()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liked Phrases Modal -->
+  <div class="modal" id="likedPhrasesPopup">
+    <div class="modal-content">
+      <div class="banner">Liked Phrases</div>
+      <div id="likedPhrasesList" class="liked-phrases-list"></div>
+      <div class="button-row">
+        <button onclick="closeLikedPhrasesPopup()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookmark Modal -->
+  <div class="modal" id="bookmarkPopup">
+    <div class="modal-content">
+      <div class="banner">Bookmarked Phrase</div>
+      <p id="bookmarkMessage">No phrase bookmarked.</p>
+      <div id="bookmarkNav" class="button-row" style="display:none;">
+        <button onclick="goToBookmark()">Go to Phrase</button>
+      </div>
+      <div class="button-row">
+        <button onclick="closeBookmarkPopup()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let quizStartTime = null;
     let phrases = [];
@@ -629,6 +763,122 @@
     const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
     const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
     const COMMENT_URL = "https://script.google.com/macros/s/AKfycbxH1psFExVPjfw_tQYZ5AcSSIFyydGuKC6q88MRNqFcdpBLY4loEZuBXog0yQOeAG4uKQ/exec";
+
+    function updateStreak() {
+      const today = new Date().toDateString();
+      const lastVisit = localStorage.getItem('lastVisit');
+      let streak = parseInt(localStorage.getItem('streak')) || 0;
+
+      if (!lastVisit) {
+        streak = 1;
+      } else {
+        const lastVisitDate = new Date(lastVisit);
+        const yesterday = new Date();
+        yesterday.setDate(new Date().getDate() - 1);
+
+        if (lastVisit === today) {
+          streak = streak;
+        } else if (lastVisitDate.toDateString() === yesterday.toDateString()) {
+          streak += 1;
+        } else {
+          streak = 1;
+        }
+      }
+
+      localStorage.setItem('streak', streak);
+      localStorage.setItem('lastVisit', today);
+      return streak;
+    }
+
+    function toggleDropdown() {
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function showStreakPopup() {
+      toggleDropdown();
+      const streak = parseInt(localStorage.getItem('streak')) || 0;
+      document.getElementById('streakMessage').textContent = `Your Streak: ${streak} days 🔥`;
+      document.getElementById('streakPopup').style.display = 'flex';
+    }
+
+    function closeStreakPopup() {
+      document.getElementById('streakPopup').style.display = 'none';
+    }
+
+    function showLikedPhrasesPopup() {
+      toggleDropdown();
+      const likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
+      const likedPhrasesList = document.getElementById('likedPhrasesList');
+      likedPhrasesList.innerHTML = '';
+      if (likedPhrases.length === 0) {
+        likedPhrasesList.innerHTML = '<p>No liked phrases.</p>';
+      } else {
+        likedPhrases.forEach((phrase, index) => {
+          const btn = document.createElement('button');
+          btn.textContent = phrase;
+          btn.onclick = () => {
+            const phraseIndex = phrases.findIndex(p => p.phrase === phrase);
+            if (phraseIndex !== -1) {
+              currentIndex = phraseIndex;
+              showSection('phrase');
+              showPhrase();
+              closeLikedPhrasesPopup();
+            }
+          };
+          likedPhrasesList.appendChild(btn);
+        });
+      }
+      document.getElementById('likedPhrasesPopup').style.display = 'flex';
+    }
+
+    function closeLikedPhrasesPopup() {
+      document.getElementById('likedPhrasesPopup').style.display = 'none';
+    }
+
+    function toggleBookmark() {
+      const bookmarkBtn = document.getElementById('bookmarkBtn');
+      const currentPhrase = phrases[currentIndex]?.phrase;
+      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
+      if (bookmarkedIndex === currentIndex) {
+        localStorage.removeItem('bookmarkedIndex');
+        bookmarkBtn.classList.remove('bookmarked');
+        bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
+      } else {
+        localStorage.setItem('bookmarkedIndex', currentIndex);
+        bookmarkBtn.classList.add('bookmarked');
+        bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
+      }
+    }
+
+    function showBookmarkPopup() {
+      toggleDropdown();
+      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
+      const bookmarkMessage = document.getElementById('bookmarkMessage');
+      const bookmarkNav = document.getElementById('bookmarkNav');
+      if (bookmarkedIndex >= 0 && bookmarkedIndex < phrases.length) {
+        bookmarkMessage.textContent = `"${phrases[bookmarkedIndex].phrase}"`;
+        bookmarkNav.style.display = 'flex';
+      } else {
+        bookmarkMessage.textContent = 'No phrase bookmarked.';
+        bookmarkNav.style.display = 'none';
+      }
+      document.getElementById('bookmarkPopup').style.display = 'flex';
+    }
+
+    function closeBookmarkPopup() {
+      document.getElementById('bookmarkPopup').style.display = 'none';
+    }
+
+    function goToBookmark() {
+      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
+      if (bookmarkedIndex >= 0 && bookmarkedIndex < phrases.length) {
+        currentIndex = bookmarkedIndex;
+        showSection('phrase');
+        showPhrase();
+        closeBookmarkPopup();
+      }
+    }
 
     function parseCSVLine(line) {
       let parts = [];
@@ -670,6 +920,7 @@
         }
         showPhrase();
         loadPhraseLikes();
+        updateBookmarkButton();
       } catch (e) {
         console.error('Error loading phrases:', e);
         document.getElementById("phraseText").textContent = "Error loading phrases.";
@@ -787,6 +1038,19 @@
         document.getElementById('likeBtn').disabled = false;
         document.getElementById('phraseHeader').style.display = currentIndex === 0 ? 'block' : 'none';
         loadPhraseLikes();
+        updateBookmarkButton();
+      }
+    }
+
+    function updateBookmarkButton() {
+      const bookmarkBtn = document.getElementById('bookmarkBtn');
+      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
+      if (bookmarkedIndex === currentIndex) {
+        bookmarkBtn.classList.add('bookmarked');
+        bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
+      } else {
+        bookmarkBtn.classList.remove('bookmarked');
+        bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
       }
     }
 
@@ -810,13 +1074,9 @@
       document.getElementById('phraseSection').style.display = (section === 'phrase') ? 'block' : 'none';
       document.getElementById('quizSection').style.display = (section === 'quiz') ? 'block' : 'none';
 
-      document.getElementById('phraseBtn').disabled = (section === 'phrase');
+      document.getElementById('logoBtn').disabled = (section === 'phrase');
       document.getElementById('quizBtn').disabled = (section === 'quiz');
-
-      if (section === 'quiz') {
-        quizStartTime = new Date();
-        updateQuiz();
-      }
+      document.getElementById('infoBtn').disabled = false; /* Ensure info button is not disabled */
     }
 
     function showInfo() {
@@ -954,6 +1214,11 @@
         if (data.status === 'success') {
           let count = parseInt(document.getElementById('phraseLikeCount').textContent);
           document.getElementById('phraseLikeCount').textContent = count + 1;
+          let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
+          if (!likedPhrases.includes(phrase)) {
+            likedPhrases.push(phrase);
+            localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+          }
         } else {
           throw new Error(data.message || 'Failed to add like');
         }
@@ -1089,9 +1354,19 @@
     }
 
     // Initialize
+    updateStreak();
     loadPhrases();
     loadQuizzes();
     loadComments();
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      const dropdownBtn = document.getElementById('dropdownBtn');
+      if (!dropdownMenu.contains(event.target) && !dropdownBtn.contains(event.target)) {
+        dropdownMenu.style.display = 'none';
+      }
+    });
   </script>
 </body>
 </html>
