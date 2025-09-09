@@ -47,8 +47,8 @@
     }
 
     .app-logo {
-      height: 50px;
-      max-width: 150px;
+      height: 24px;
+      max-width: 180px;
       object-fit: contain;
     }
 
@@ -65,21 +65,6 @@
       display: flex;
       align-items: center;
       gap: 5px;
-    }
-
-    /* Specific styles for logo button to remove padding and button styling */
-    #logoBtn {
-      padding: 0;
-      background: none;
-      border: none;
-      border-radius: 0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-    }
-
-    #logoBtn:hover:enabled {
-      background: none;
     }
 
     .top-nav button:disabled {
@@ -517,6 +502,26 @@
       display: none;
     }
 
+    .modal-content .streak-conditions {
+      font-size: 12px;
+      font-style: italic;
+      color: #555;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .medal-bronze {
+      color: #cd7f32;
+    }
+
+    .medal-silver {
+      color: #c0c0c0;
+    }
+
+    .medal-gold {
+      color: #ffd700;
+    }
+
     .progress-bar {
       width: 100%;
       height: 6px;
@@ -720,6 +725,7 @@
     <div class="modal-content">
       <div class="banner">Your Streak</div>
       <p id="streakMessage">Your Streak: 0 days 🔥</p>
+      <span class="streak-conditions">Week 1 - Bronze Medal, Week 2 - Silver Medal, Week 3 onwards - Gold Medal</span>
       <div class="button-row">
         <button onclick="closeStreakPopup()">OK</button>
       </div>
@@ -798,7 +804,26 @@
     function showStreakPopup() {
       toggleDropdown();
       const streak = parseInt(localStorage.getItem('streak')) || 0;
-      document.getElementById('streakMessage').textContent = `Your Streak: ${streak} days 🔥`;
+      const streakMessage = document.getElementById('streakMessage');
+      const streakConditions = document.querySelector('#streakPopup .streak-conditions');
+      
+      if (streak > 0) {
+        streakMessage.innerHTML = `Your Streak: ${streak} day${streak !== 1 ? 's' : ''}!<br>You earned a badge <i class="fa-solid fa-medal"></i>`;
+        const medalIcon = streakMessage.querySelector('i');
+        medalIcon.classList.remove('medal-bronze', 'medal-silver', 'medal-gold');
+        if (streak >= 1 && streak <= 7) {
+          medalIcon.classList.add('medal-bronze');
+        } else if (streak >= 8 && streak <= 14) {
+          medalIcon.classList.add('medal-silver');
+        } else if (streak >= 15) {
+          medalIcon.classList.add('medal-gold');
+        }
+        streakConditions.style.display = 'block';
+      } else {
+        streakMessage.innerHTML = `Your Streak: 0 days 🔥`;
+        streakConditions.style.display = 'none';
+      }
+      
       document.getElementById('streakPopup').style.display = 'flex';
     }
 
@@ -1073,10 +1098,12 @@
     function showSection(section) {
       document.getElementById('phraseSection').style.display = (section === 'phrase') ? 'block' : 'none';
       document.getElementById('quizSection').style.display = (section === 'quiz') ? 'block' : 'none';
-
+      if (section === 'quiz') {
+        quizStartTime = new Date();
+      }
       document.getElementById('logoBtn').disabled = (section === 'phrase');
       document.getElementById('quizBtn').disabled = (section === 'quiz');
-      document.getElementById('infoBtn').disabled = false; /* Ensure info button is not disabled */
+      document.getElementById('infoBtn').disabled = false;
     }
 
     function showInfo() {
@@ -1121,7 +1148,7 @@
 
       if (isCorrect) {
         let endTime = new Date();
-        let timeTaken = ((endTime - quizStartTime) / 1000).toFixed(2);
+        let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : "0.00";
         quizBanner.textContent = "Correct Answer";
         message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds 🎉`;
         shareBtn.style.display = "inline-block";
