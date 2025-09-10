@@ -730,8 +730,7 @@
     <div class="modal-content">
       <div class="banner">Your Streak</div>
       <p id="streakMessage">Your Streak: 0 days 🔥</p>
-      <span class="share-text">Share with your friends</span>
-      <a id="streakShareBtn" class="share-icon" onclick="shareStreak()" aria-label="Share Streak"><i class="fa-solid fa-arrow-up-from-bracket"></i></a>
+      <a id="streakShareBtn" class="share-icon" onclick="shareStreak()" aria-label="Share Streak"></a>
       <span class="streak-conditions">Week 1 - Bronze Medal, Week 2 - Silver Medal, Week 3 onwards - Gold Medal</span>
       <div class="button-row">
         <button onclick="shareStreak()">Share</button>
@@ -815,7 +814,6 @@
       const streakMessage = document.getElementById('streakMessage');
       const streakConditions = document.querySelector('#streakPopup .streak-conditions');
       const streakShareBtn = document.getElementById('streakShareBtn');
-      const shareText = document.querySelector('#streakPopup .share-text');
       
       if (streak > 0) {
         streakMessage.innerHTML = `Your Streak: ${streak} day${streak !== 1 ? 's' : ''}!<br>You earned a badge <i class="fa-solid fa-medal"></i>`;
@@ -830,12 +828,10 @@
         }
         streakConditions.style.display = 'block';
         streakShareBtn.style.display = 'inline-block';
-        shareText.style.display = 'inline-block';
       } else {
         streakMessage.innerHTML = `Your Streak: 0 days 🔥`;
         streakConditions.style.display = 'none';
         streakShareBtn.style.display = 'none';
-        shareText.style.display = 'none';
       }
       
       document.getElementById('streakPopup').style.display = 'flex';
@@ -1090,7 +1086,8 @@
         document.getElementById("phraseText").textContent = `"${p.phrase}"`;
         document.getElementById("meaningText").textContent = p.meaning;
         document.getElementById("usageText").textContent = p.usage;
-        document.getElementById('likeBtn').disabled = false;
+        const likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
+        document.getElementById('likeBtn').disabled = likedPhrases.includes(p.phrase);
         document.getElementById('phraseHeader').style.display = currentIndex === 0 ? 'block' : 'none';
         loadPhraseLikes();
         updateBookmarkButton();
