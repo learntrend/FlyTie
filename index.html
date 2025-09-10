@@ -47,7 +47,7 @@
     }
 
     .app-logo {
-      height: 16px;
+      height: 25px;
       max-width: 180px;
       object-fit: contain;
     }
@@ -66,6 +66,10 @@
       display: flex;
       align-items: center;
       gap: 5px;
+    }
+
+    #logoBtn {
+      padding: 7.5px 10px;
     }
 
     .top-nav button:disabled {
@@ -726,8 +730,11 @@
     <div class="modal-content">
       <div class="banner">Your Streak</div>
       <p id="streakMessage">Your Streak: 0 days 🔥</p>
+      <span class="share-text">Share with your friends</span>
+      <a id="streakShareBtn" class="share-icon" onclick="shareStreak()" aria-label="Share Streak"><i class="fa-solid fa-arrow-up-from-bracket"></i></a>
       <span class="streak-conditions">Week 1 - Bronze Medal, Week 2 - Silver Medal, Week 3 onwards - Gold Medal</span>
       <div class="button-row">
+        <button onclick="shareStreak()">Share</button>
         <button onclick="closeStreakPopup()">OK</button>
       </div>
     </div>
@@ -807,6 +814,8 @@
       const streak = parseInt(localStorage.getItem('streak')) || 0;
       const streakMessage = document.getElementById('streakMessage');
       const streakConditions = document.querySelector('#streakPopup .streak-conditions');
+      const streakShareBtn = document.getElementById('streakShareBtn');
+      const shareText = document.querySelector('#streakPopup .share-text');
       
       if (streak > 0) {
         streakMessage.innerHTML = `Your Streak: ${streak} day${streak !== 1 ? 's' : ''}!<br>You earned a badge <i class="fa-solid fa-medal"></i>`;
@@ -820,9 +829,13 @@
           medalIcon.classList.add('medal-gold');
         }
         streakConditions.style.display = 'block';
+        streakShareBtn.style.display = 'inline-block';
+        shareText.style.display = 'inline-block';
       } else {
         streakMessage.innerHTML = `Your Streak: 0 days 🔥`;
         streakConditions.style.display = 'none';
+        streakShareBtn.style.display = 'none';
+        shareText.style.display = 'none';
       }
       
       document.getElementById('streakPopup').style.display = 'flex';
@@ -830,6 +843,22 @@
 
     function closeStreakPopup() {
       document.getElementById('streakPopup').style.display = 'none';
+    }
+
+    function shareStreak() {
+      const streak = parseInt(localStorage.getItem('streak')) || 0;
+      if (navigator.share) {
+        navigator.share({
+          title: 'FlyTie - My Streak',
+          text: `I've kept a ${streak} day streak on FlyTie! 🔥`,
+          url: window.location.href
+        }).catch(err => {
+          console.error('Error sharing streak:', err);
+          alert('Error sharing streak: ' + err.message);
+        });
+      } else {
+        alert("Sharing not supported on this browser.");
+      }
     }
 
     function showLikedPhrasesPopup() {
