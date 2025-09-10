@@ -732,7 +732,7 @@
     <div class="modal-content">
       <div class="banner">Your Streak</div>
       <p id="streakMessage">Your Streak: 0 days 🔥</p>
-      <a id="streakShareBtn" class="share-icon" onclick="shareStreak()" aria-label="Share Streak"></a>
+      <a id="streakShareBtn" class="share-icon" onclick="shareStreak()" aria-label="Share Streak"><i class="fa-solid fa-arrow-up-from-bracket"></i></a>
       <span class="streak-conditions">Week 1 - Bronze Medal, Week 2 - Silver Medal, Week 3 onwards - Gold Medal</span>
       <div class="button-row">
         <button onclick="shareStreak()">Share</button>
@@ -778,6 +778,23 @@
     const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
     const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
     const COMMENT_URL = "https://script.google.com/macros/s/AKfycbxH1psFExVPjfw_tQYZ5AcSSIFyydGuKC6q88MRNqFcdpBLY4loEZuBXog0yQOeAG4uKQ/exec";
+
+    async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const res = await fetch(url, { ...options, signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+          return await res.json();
+        } catch (e) {
+          if (i === retries - 1) throw e;
+          console.warn(`Fetch attempt ${i + 1} failed for ${url}: ${e.message}. Retrying...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
 
     function updateStreak() {
       const today = new Date().toDateString();
@@ -972,7 +989,6 @@
           }
         }
         showPhrase();
-        loadPhraseLikes();
         updateBookmarkButton();
       } catch (e) {
         console.error('Error loading phrases:', e);
@@ -1011,9 +1027,7 @@
 
     async function loadComments(page = 0) {
       try {
-        let res = await fetch(`${COMMENT_URL}?action=getComments`);
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let data = await res.json();
+        let data = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
         if (data.status !== 'success') throw new Error(data.message || 'Failed to load comments');
         let commentList = document.getElementById('commentList');
         commentList.innerHTML = '';
@@ -1052,7 +1066,10 @@
         document.getElementById('nextComments').disabled = end >= data.comments.length;
       } catch (e) {
         console.error('Error loading comments:', e);
-        alert('Error loading comments: ' + e.message);
+        document.getElementById('commentCount').textContent = '0';
+        if (e.name !== 'AbortError') {
+          alert('Error loading comments: Load failed. Please try again later.');
+        }
       }
     }
 
@@ -1071,14 +1088,15 @@
     async function loadPhraseLikes() {
       try {
         let phrase = phrases[currentIndex]?.phrase || '';
-        let res = await fetch(`${COMMENT_URL}?action=getLikes&phrase=${encodeURIComponent(phrase)}`);
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let data = await res.json();
+        let data = await fetchWithRetry(`${COMMENT_URL}?action=getLikes&phrase=${encodeURIComponent(phrase)}`);
         if (data.status !== 'success') throw new Error(data.message || 'Failed to load likes');
         document.getElementById('phraseLikeCount').textContent = data.likes || 0;
       } catch (e) {
         console.error('Error loading likes:', e);
-        alert('Error loading likes: ' + e.message);
+        document.getElementById('phraseLikeCount').textContent = '0';
+        if (e.name !== 'AbortError') {
+          alert('Error loading likes: Load failed. Please try again later.');
+        }
       }
     }
 
