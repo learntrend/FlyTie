@@ -4,11 +4,10 @@
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-MG8CHP26VF"></script>
   <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-MG8CHP26VF');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-MG8CHP26VF');
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,7 +35,6 @@
       height: 100vh;
       flex-direction: column;
     }
-
     /* Top Nav */
     .top-nav {
       display: flex;
@@ -47,20 +45,17 @@
       padding-left: 05px;
       color: #fff;
     }
-
     .top-nav .left {
       display: flex;
       gap: 05px;
       align-items: center;
       position: relative;
     }
-
     .app-logo {
       height: 25px;
       max-width: 180px;
       object-fit: contain;
     }
-
     .top-nav button {
       background: #fff;
       color: #2E8BC0;
@@ -76,22 +71,18 @@
       align-items: center;
       gap: 5px;
     }
-
     #logoBtn {
       padding: 7.5px 10px;
     }
-
     .top-nav button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
     }
-
     .top-nav button:hover:enabled {
       background: #145DA0;
       color: #fff;
     }
-
     .dropdown-menu {
       display: none;
       position: absolute;
@@ -103,7 +94,6 @@
       z-index: 1000;
       min-width: 150px;
     }
-
     .dropdown-menu button {
       width: 100%;
       text-align: left;
@@ -112,19 +102,16 @@
       font-size: 14px;
       font-weight: normal;
     }
-
     .dropdown-menu button:hover {
       background: #145DA0;
       color: #fff;
     }
-
     .main {
       flex: 1;
       padding: 20px;
       display: flex;
       flex-direction: column;
     }
-
     .card {
       background: #fff;
       border-radius: 12px;
@@ -135,17 +122,14 @@
       position: relative;
       min-height: 300px;
     }
-
     .card h2 {
       font-family: 'Montserrat', sans-serif;
       margin-bottom: 15px;
       padding: 10px;
     }
-
     .card p {
       padding: 10px;
     }
-
     .bookmark-btn {
       position: absolute;
       top: 10px;
@@ -162,16 +146,13 @@
       align-items: center;
       gap: 5px;
     }
-
     .bookmark-btn:hover:enabled {
       background: #145DA0;
       color: #fff;
     }
-
     .bookmark-btn.bookmarked i {
       color: #2E8BC0;
     }
-
     .like-section {
       display: flex;
       flex-direction: column;
@@ -182,13 +163,11 @@
       align-items: center;
       text-align: left;
     }
-
     .like-section .like-row {
       display: flex;
       align-items: center;
       gap: 10px;
     }
-
     .like-section button {
       background: #fff;
       color: #2E8BC0;
@@ -202,18 +181,15 @@
       align-items: center;
       gap: 5px;
     }
-
     .like-section button:hover:enabled {
       background: #145DA0;
       color: #fff;
     }
-
     .like-section button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
     }
-
     /* Navigation buttons */
     .nav-buttons {
       display: flex;
@@ -221,7 +197,6 @@
       gap: 20px;
       margin-top: 20px;
     }
-
     .nav-buttons button {
       background: #2E8BC0;
       border: none;
@@ -238,11 +213,9 @@
       justify-content: center;
       gap: 5px;
     }
-
     .nav-buttons button:hover {
       background: #145DA0;
     }
-
     /* Comments Section */
     .comments {
       flex: 1;
@@ -253,29 +226,24 @@
       display: flex;
       flex-direction: column;
     }
-
     .comments-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
     }
-
     .stats {
       font-size: 14px;
       color: #555;
     }
-
     .stats i {
       color: #666;
     }
-
     .actions {
       display: flex;
       gap: 10px;
       align-items: center;
     }
-
     .actions button {
       background: #fff;
       color: #2E8BC0;
@@ -289,41 +257,34 @@
       align-items: center;
       gap: 5px;
     }
-
     .actions button:hover:enabled {
       background: #145DA0;
       color: #fff;
     }
-
     .actions button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
     }
-
     .comment-list {
       max-height: 400px;
       overflow-y: auto;
       margin-bottom: 12px;
     }
-
     .comment {
       margin-bottom: 12px;
       padding: 10px;
       border-bottom: 1px solid #eee;
     }
-
     .comment strong {
       display: block;
       color: #145DA0;
     }
-
     .comment-actions {
       display: flex;
       gap: 10px;
       margin-top: 5px;
     }
-
     .comment-actions button {
       background: #fff;
       color: #2E8BC0;
@@ -337,32 +298,27 @@
       align-items: center;
       gap: 5px;
     }
-
     .comment-actions button:hover:enabled {
       background: #145DA0;
       color: #fff;
     }
-
     .comment-actions button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
     }
-
     .reply {
       margin-left: 20px;
       margin-top: 8px;
       padding: 8px;
       border-left: 2px solid #2E8BC0;
     }
-
     .pagination {
       display: flex;
       justify-content: center;
       gap: 10px;
       margin-top: 10px;
     }
-
     .pagination button {
       background: #2E8BC0;
       border: none;
@@ -373,17 +329,14 @@
       transition: 0.3s;
       font-size: 14px;
     }
-
     .pagination button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
     }
-
     .pagination button:hover:enabled {
       background: #145DA0;
     }
-
     /* Quiz buttons */
     .quiz-option {
       background: #2E8BC0;
@@ -397,11 +350,9 @@
       cursor: pointer;
       transition: 0.3s;
     }
-
     .quiz-option:hover {
       background: #145DA0;
     }
-
     /* Quiz Header */
     .quiz-header {
       font-family: 'Montserrat', sans-serif;
@@ -410,7 +361,6 @@
       margin-bottom: 10px;
       color: #2E8BC0;
     }
-
     /* Popup Modal */
     .modal {
       display: none;
@@ -421,7 +371,6 @@
       justify-content: center;
       align-items: center;
     }
-
     .modal-content {
       background: white;
       padding: 20px;
@@ -436,7 +385,6 @@
       flex-direction: column;
       justify-content: space-between;
     }
-
     .modal-content .banner {
       background: #2E8BC0;
       color: #fff;
@@ -449,7 +397,6 @@
       border-top-right-radius: 10px;
       margin: -20px -20px 20px -20px;
     }
-
     .modal-content p.tick-item {
       text-align: left;
       margin-bottom: 4px;
@@ -457,12 +404,10 @@
       display: flex;
       align-items: center;
     }
-
     .modal-content p.tick-item i {
       color: #2E8BC0;
       margin-right: 20px;
     }
-
     .modal-content .button-row {
       display: flex;
       justify-content: center;
@@ -470,7 +415,6 @@
       gap: 10px;
       margin-top: 10px;
     }
-
     .modal-content button {
       background: #2E8BC0;
       border: none;
@@ -483,13 +427,11 @@
       gap: 5px;
       font-size: 14px;
     }
-
     .modal-content button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
     }
-
     .modal-content a.share-icon {
       color: #2E8BC0;
       font-size: 16px;
@@ -501,11 +443,9 @@
       right: 10px;
       display: none;
     }
-
     .modal-content a.share-icon:hover {
       color: #145DA0;
     }
-
     .modal-content .share-text {
       position: absolute;
       top: 52px;
@@ -515,7 +455,6 @@
       color: #555;
       display: none;
     }
-
     .modal-content .streak-conditions {
       font-size: 12px;
       font-style: italic;
@@ -523,19 +462,15 @@
       margin-top: 10px;
       text-align: center;
     }
-
     .medal-bronze {
       color: #cd7f32;
     }
-
     .medal-silver {
       color: #c0c0c0;
     }
-
     .medal-gold {
       color: #ffd700;
     }
-
     .progress-bar {
       width: 100%;
       height: 6px;
@@ -544,21 +479,18 @@
       border-radius: 3px;
       overflow: hidden;
     }
-
     .progress-fill {
       height: 100%;
       width: 0;
       background: #2E8BC0;
       transition: width 5s linear;
     }
-
     .modal-content input, .modal-content textarea {
       width: 100%;
       padding: 8px;
       margin-bottom: 8px;
       box-sizing: border-box;
     }
-
     .liked-phrases-list button {
       background: #2E8BC0;
       color: #fff;
@@ -572,11 +504,16 @@
       transition: 0.3s;
       font-size: 14px;
     }
-
     .liked-phrases-list button:hover {
       background: #145DA0;
     }
-
+    #cookieConsent a:hover {
+      color: #145DA0;
+    }
+    #cookieConsent button:hover {
+      background: #145DA0;
+      color: #fff;
+    }
     /* Responsive */
     @media(max-width: 768px) {
       .top-nav {
@@ -602,6 +539,11 @@
   </style>
 </head>
 <body>
+  <div id="cookieConsent" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#2E8BC0; color:#fff; padding:10px; text-align:center; z-index:1000;">
+    <p>We use cookies to track usage and improve your experience. <a href="/privacy-policy" style="color:#fff; text-decoration:underline;">Learn more</a></p>
+    <button onclick="acceptCookies()" style="background:#fff; color:#2E8BC0; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; margin-left:10px;">Accept</button>
+    <button onclick="declineCookies()" style="background:#fff; color:#2E8BC0; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; margin-left:10px;">Decline</button>
+  </div>
   <!-- Top Nav -->
   <div class="top-nav">
     <div class="left">
@@ -619,7 +561,6 @@
     </div>
     <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
   </div>
-
   <!-- Main Content -->
   <div class="main">
     <!-- Phrase Section -->
@@ -644,7 +585,6 @@
         </div>
       </div>
     </div>
-
     <!-- Quiz Section -->
     <div id="quizSection" style="display:none;">
       <div class="card">
@@ -655,7 +595,6 @@
         </div>
       </div>
     </div>
-
     <!-- Comments Section -->
     <div class="comments">
       <div class="comments-header">
@@ -676,7 +615,6 @@
       </div>
     </div>
   </div>
-
   <!-- Modals -->
   <div class="modal" id="popup">
     <div class="modal-content">
@@ -692,7 +630,6 @@
       </div>
     </div>
   </div>
-
   <!-- Info Modal -->
   <div class="modal" id="infoPopup">
     <div class="modal-content">
@@ -709,7 +646,6 @@
       </div>
     </div>
   </div>
-
   <!-- Comment Modal -->
   <div class="modal" id="commentPopup">
     <div class="modal-content">
@@ -722,7 +658,6 @@
       </div>
     </div>
   </div>
-
   <!-- Reply Modal -->
   <div class="modal" id="replyPopup">
     <div class="modal-content">
@@ -735,7 +670,6 @@
       </div>
     </div>
   </div>
-
   <!-- Streak Modal -->
   <div class="modal" id="streakPopup">
     <div class="modal-content">
@@ -749,7 +683,6 @@
       </div>
     </div>
   </div>
-
   <!-- Liked Phrases Modal -->
   <div class="modal" id="likedPhrasesPopup">
     <div class="modal-content">
@@ -760,7 +693,6 @@
       </div>
     </div>
   </div>
-
   <!-- Bookmark Modal -->
   <div class="modal" id="bookmarkPopup">
     <div class="modal-content">
@@ -774,7 +706,6 @@
       </div>
     </div>
   </div>
-
   <script>
     let quizStartTime = null;
     let phrases = [];
@@ -783,11 +714,30 @@
     let currentCommentId = null;
     let currentCommentPage = 0;
     const commentsPerPage = 10;
-
     const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
     const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
     const COMMENT_URL = "https://script.google.com/macros/s/AKfycbxH1psFExVPjfw_tQYZ5AcSSIFyydGuKC6q88MRNqFcdpBLY4loEZuBXog0yQOeAG4uKQ/exec";
-
+    function acceptCookies() {
+      localStorage.setItem('cookieConsent', 'accepted');
+      document.getElementById('cookieConsent').style.display = 'none';
+      gtag('consent', 'update', {
+        'analytics_storage': 'granted'
+      });
+    }
+    function declineCookies() {
+      localStorage.setItem('cookieConsent', 'denied');
+      document.getElementById('cookieConsent').style.display = 'none';
+      gtag('consent', 'update', {
+        'analytics_storage': 'denied'
+      });
+    }
+    if (!localStorage.getItem('cookieConsent')) {
+      document.getElementById('cookieConsent').style.display = 'block';
+    } else if (localStorage.getItem('cookieConsent') === 'accepted') {
+      gtag('consent', 'update', {
+        'analytics_storage': 'granted'
+      });
+    }
     async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
       for (let i = 0; i < retries; i++) {
         try {
@@ -804,19 +754,16 @@
         }
       }
     }
-
     function updateStreak() {
       const today = new Date().toDateString();
       const lastVisit = localStorage.getItem('lastVisit');
       let streak = parseInt(localStorage.getItem('streak')) || 0;
-
       if (!lastVisit) {
         streak = 1;
       } else {
         const lastVisitDate = new Date(lastVisit);
         const yesterday = new Date();
         yesterday.setDate(new Date().getDate() - 1);
-
         if (lastVisit === today) {
           streak = streak;
         } else if (lastVisitDate.toDateString() === yesterday.toDateString()) {
@@ -825,24 +772,20 @@
           streak = 1;
         }
       }
-
       localStorage.setItem('streak', streak);
       localStorage.setItem('lastVisit', today);
       return streak;
     }
-
     function toggleDropdown() {
       const dropdownMenu = document.getElementById('dropdownMenu');
       dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
     }
-
     function showStreakPopup() {
       toggleDropdown();
       const streak = parseInt(localStorage.getItem('streak')) || 0;
       const streakMessage = document.getElementById('streakMessage');
       const streakConditions = document.querySelector('#streakPopup .streak-conditions');
       const streakShareBtn = document.getElementById('streakShareBtn');
-      
       if (streak > 0) {
         streakMessage.innerHTML = `Your Streak: ${streak} day${streak !== 1 ? 's' : ''}!<br>You earned a badge <i class="fa-solid fa-medal"></i>`;
         const medalIcon = streakMessage.querySelector('i');
@@ -861,14 +804,11 @@
         streakConditions.style.display = 'none';
         streakShareBtn.style.display = 'none';
       }
-      
       document.getElementById('streakPopup').style.display = 'flex';
     }
-
     function closeStreakPopup() {
       document.getElementById('streakPopup').style.display = 'none';
     }
-
     function shareStreak() {
       const streak = parseInt(localStorage.getItem('streak')) || 0;
       if (navigator.share) {
@@ -876,6 +816,14 @@
           title: 'FlyTie - My Streak',
           text: `I've kept a ${streak} day streak on FlyTie! 🔥`,
           url: window.location.href
+        }).then(() => {
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'share_streak', {
+              'streak_length': streak,
+              'event_category': 'engagement',
+              'event_label': 'Streak Shared'
+            });
+          }
         }).catch(err => {
           console.error('Error sharing streak:', err);
           alert('Error sharing streak: ' + err.message);
@@ -884,7 +832,6 @@
         alert("Sharing not supported on this browser.");
       }
     }
-
     function showLikedPhrasesPopup() {
       toggleDropdown();
       const likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
@@ -910,11 +857,9 @@
       }
       document.getElementById('likedPhrasesPopup').style.display = 'flex';
     }
-
     function closeLikedPhrasesPopup() {
       document.getElementById('likedPhrasesPopup').style.display = 'none';
     }
-
     function toggleBookmark() {
       const bookmarkBtn = document.getElementById('bookmarkBtn');
       const currentPhrase = phrases[currentIndex]?.phrase;
@@ -929,7 +874,6 @@
         bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
       }
     }
-
     function showBookmarkPopup() {
       toggleDropdown();
       const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
@@ -944,11 +888,9 @@
       }
       document.getElementById('bookmarkPopup').style.display = 'flex';
     }
-
     function closeBookmarkPopup() {
       document.getElementById('bookmarkPopup').style.display = 'none';
     }
-
     function goToBookmark() {
       const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
       if (bookmarkedIndex >= 0 && bookmarkedIndex < phrases.length) {
@@ -958,7 +900,6 @@
         closeBookmarkPopup();
       }
     }
-
     function parseCSVLine(line) {
       let parts = [];
       let current = '';
@@ -976,7 +917,6 @@
       parts.push(current.trim());
       return parts;
     }
-
     async function loadPhrases() {
       try {
         let res = await fetch(PHRASES_CSV_URL);
@@ -1004,7 +944,6 @@
         document.getElementById("phraseText").textContent = "Error loading phrases.";
       }
     }
-
     async function loadQuizzes() {
       try {
         let res = await fetch(QUIZ_CSV_URL);
@@ -1033,7 +972,6 @@
         document.getElementById("quizTitle").textContent = "Error loading quiz.";
       }
     }
-
     async function loadComments(page = 0) {
       try {
         let data = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
@@ -1081,19 +1019,16 @@
         }
       }
     }
-
     function prevCommentsPage() {
       if (currentCommentPage > 0) {
         currentCommentPage--;
         loadComments(currentCommentPage);
       }
     }
-
     function nextCommentsPage() {
       currentCommentPage++;
       loadComments(currentCommentPage);
     }
-
     async function loadPhraseLikes() {
       try {
         let phrase = phrases[currentIndex]?.phrase || '';
@@ -1108,7 +1043,6 @@
         }
       }
     }
-
     function showPhrase() {
       if (phrases.length > 0) {
         let p = phrases[currentIndex];
@@ -1122,7 +1056,6 @@
         updateBookmarkButton();
       }
     }
-
     function updateBookmarkButton() {
       const bookmarkBtn = document.getElementById('bookmarkBtn');
       const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
@@ -1134,7 +1067,6 @@
         bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
       }
     }
-
     function prevPhrase() {
       if (currentIndex > 0) {
         currentIndex--;
@@ -1142,7 +1074,6 @@
         updateQuiz();
       }
     }
-
     function nextPhrase() {
       if (currentIndex < phrases.length - 1) {
         currentIndex++;
@@ -1150,7 +1081,6 @@
         updateQuiz();
       }
     }
-
     function showSection(section) {
       document.getElementById('phraseSection').style.display = (section === 'phrase') ? 'block' : 'none';
       document.getElementById('quizSection').style.display = (section === 'quiz') ? 'block' : 'none';
@@ -1161,25 +1091,20 @@
       document.getElementById('quizBtn').disabled = (section === 'quiz');
       document.getElementById('infoBtn').disabled = false;
     }
-
     function showInfo() {
       document.getElementById('infoPopup').style.display = 'flex';
     }
-
     function closeInfoPopup() {
       document.getElementById('infoPopup').style.display = 'none';
     }
-
     function updateQuiz() {
       if (quizzes.length === 0 || phrases.length === 0) return;
       let p = phrases[currentIndex];
       let quiz = quizzes.find(q => q.question.toLowerCase().includes(p.phrase.toLowerCase())) || quizzes[0];
       document.getElementById('quizTitle').innerHTML = quiz.question;
-
       let options = [quiz.option1, quiz.option2, quiz.option3];
       let correctAnswer = quiz.answer;
       options = options.sort(() => Math.random() - 0.5);
-
       let quizOptions = document.getElementById('quizOptions');
       quizOptions.innerHTML = '';
       options.forEach(opt => {
@@ -1191,7 +1116,6 @@
         quizOptions.appendChild(btn);
       });
     }
-
     function checkAnswer(isCorrect) {
       const popup = document.getElementById("popup");
       const message = document.getElementById("popupMessage");
@@ -1201,7 +1125,6 @@
       const okBtn = document.getElementById("okBtn");
       const progressBar = document.getElementById("progressBar");
       const progressFill = document.getElementById("progressFill");
-
       if (isCorrect) {
         let endTime = new Date();
         let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : "0.00";
@@ -1212,6 +1135,14 @@
         shareBtn.dataset.time = timeTaken;
         okBtn.disabled = false;
         progressBar.style.display = "none";
+        if (localStorage.getItem('cookieConsent') === 'accepted') {
+          gtag('event', 'quiz_completed', {
+            'result': 'correct',
+            'time_taken': timeTaken,
+            'event_category': 'engagement',
+            'event_label': 'Quiz Completed'
+          });
+        }
       } else {
         quizBanner.textContent = "Wrong Answer";
         message.innerHTML = `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
@@ -1225,36 +1156,37 @@
           okBtn.disabled = false;
           progressBar.style.display = "none";
         }, 5000);
+        if (localStorage.getItem('cookieConsent') === 'accepted') {
+          gtag('event', 'quiz_completed', {
+            'result': 'incorrect',
+            'event_category': 'engagement',
+            'event_label': 'Quiz Completed'
+          });
+        }
       }
       popup.style.display = "flex";
     }
-
     function closePopup() {
       document.getElementById("popup").style.display = "none";
     }
-
     function showCommentPopup() {
       document.getElementById('commentPopup').style.display = 'flex';
       document.getElementById('username').value = '';
       document.getElementById('commentText').value = '';
     }
-
     function closeCommentPopup() {
       document.getElementById('commentPopup').style.display = 'none';
     }
-
     function showReplyPopup(commentId) {
       currentCommentId = commentId;
       document.getElementById('replyPopup').style.display = 'flex';
       document.getElementById('replyUsername').value = '';
       document.getElementById('replyText').value = '';
     }
-
     function closeReplyPopup() {
       document.getElementById('replyPopup').style.display = 'none';
       currentCommentId = null;
     }
-
     function shareResult() {
       const shareBtn = document.getElementById("shareBtn");
       let timeTaken = shareBtn.dataset.time || "?";
@@ -1268,7 +1200,6 @@
         alert("Sharing not supported on this browser.");
       }
     }
-
     function globalShare() {
       if (navigator.share) {
         navigator.share({
@@ -1280,7 +1211,6 @@
         alert("Sharing not supported on this browser.");
       }
     }
-
     document.getElementById('likeBtn').onclick = async function() {
       this.disabled = true;
       let phrase = phrases[currentIndex]?.phrase || '';
@@ -1302,6 +1232,13 @@
             likedPhrases.push(phrase);
             localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
           }
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'like_phrase', {
+              'phrase': phrase,
+              'event_category': 'engagement',
+              'event_label': 'Phrase Liked'
+            });
+          }
         } else {
           throw new Error(data.message || 'Failed to add like');
         }
@@ -1311,11 +1248,9 @@
         this.disabled = false;
       }
     };
-
     document.getElementById('commentBtn').onclick = function() {
       showCommentPopup();
     };
-
     async function submitComment() {
       let username = document.getElementById('username').value.trim();
       let comment = document.getElementById('commentText').value.trim();
@@ -1354,6 +1289,12 @@
           let ccount = parseInt(document.getElementById('commentCount').textContent);
           document.getElementById('commentCount').textContent = ccount + 1;
           closeCommentPopup();
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'submit_comment', {
+              'event_category': 'engagement',
+              'event_label': 'Comment Submitted'
+            });
+          }
         } else {
           throw new Error(data.message || 'Failed to add comment');
         }
@@ -1362,7 +1303,6 @@
         alert('Error adding comment: ' + e.message);
       }
     }
-
     async function submitReply() {
       let username = document.getElementById('replyUsername').value.trim();
       let reply = document.getElementById('replyText').value.trim();
@@ -1399,6 +1339,12 @@
           let ccount = parseInt(document.getElementById('commentCount').textContent);
           document.getElementById('commentCount').textContent = ccount + 1;
           closeReplyPopup();
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'submit_reply', {
+              'event_category': 'engagement',
+              'event_label': 'Reply Submitted'
+            });
+          }
         } else {
           throw new Error(data.message || 'Failed to add reply');
         }
@@ -1407,7 +1353,6 @@
         alert('Error adding reply: ' + e.message);
       }
     }
-
     async function likeComment(commentId, isReply) {
       let button = document.querySelector(`[data-comment-id="${commentId}"] button[aria-label="${isReply ? 'Like this reply' : 'Like this comment'}"]`);
       button.disabled = true;
@@ -1426,6 +1371,13 @@
           let likeCountSpan = button.querySelector('.like-count');
           let count = parseInt(likeCountSpan.textContent);
           likeCountSpan.textContent = count + 1;
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'like_comment', {
+              'is_reply': isReply,
+              'event_category': 'engagement',
+              'event_label': isReply ? 'Reply Liked' : 'Comment Liked'
+            });
+          }
         } else {
           throw new Error(data.message || 'Failed to add comment like');
         }
@@ -1435,13 +1387,11 @@
         button.disabled = false;
       }
     }
-
     // Initialize
     updateStreak();
     loadPhrases();
     loadQuizzes();
     loadComments();
-
     // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
       const dropdownMenu = document.getElementById('dropdownMenu');
