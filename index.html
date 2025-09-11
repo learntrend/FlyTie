@@ -915,6 +915,9 @@
         }
       }
     }
+    function closeBookmarkPopup() {
+      document.getElementById('bookmarkPopup').style.display = 'none';
+    }
     function parseCSVLine(line) {
       let parts = [];
       let current = '';
