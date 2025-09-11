@@ -83,6 +83,10 @@
       background: #145DA0;
       color: #fff;
     }
+    .top-nav button.active {
+      background: #145DA0;
+      color: #fff;
+    }
     .dropdown-menu {
       display: none;
       position: absolute;
@@ -540,7 +544,7 @@
 </head>
 <body>
   <div id="cookieConsent" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#2E8BC0; color:#fff; padding:10px; text-align:center; z-index:1000;">
-    <p>We use cookies to track usage and improve your experience. <a href="/privacy-policy" style="color:#fff; text-decoration:underline;">Learn more</a></p>
+    <p>We use cookies to track usage and improve your experience. <a href="https://learntrend.github.io/privacy-policy.html" style="color:#fff; text-decoration:underline;">Learn more</a></p>
     <button onclick="acceptCookies()" style="background:#fff; color:#2E8BC0; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; margin-left:10px;">Accept</button>
     <button onclick="declineCookies()" style="background:#fff; color:#2E8BC0; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; margin-left:10px;">Decline</button>
   </div>
@@ -825,8 +829,12 @@
             });
           }
         }).catch(err => {
+          // Suppress alerts for user cancellation or permission issues
+          if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
+            return;
+          }
           console.error('Error sharing streak:', err);
-          alert('Error sharing streak: ' + err.message);
+          alert('Error sharing streak: An unexpected error occurred. Please try again.');
         });
       } else {
         alert("Sharing not supported on this browser.");
@@ -1095,8 +1103,11 @@
         quizStartTime = new Date();
       }
       document.getElementById('logoBtn').disabled = (section === 'phrase');
+      document.getElementById('logoBtn').classList.toggle('active', section === 'phrase');
       document.getElementById('quizBtn').disabled = (section === 'quiz');
+      document.getElementById('quizBtn').classList.toggle('active', section === 'quiz');
       document.getElementById('infoBtn').disabled = false;
+      document.getElementById('infoBtn').classList.remove('active');
     }
     function showInfo() {
       document.getElementById('infoPopup').style.display = 'flex';
@@ -1202,6 +1213,13 @@
           title: 'FlyTie - Phrase of the Day Quiz',
           text: `I just got the FlyTie quiz right in ${timeTaken} seconds! 🎉`,
           url: window.location.href
+        }).catch(err => {
+          // Suppress alerts for user cancellation or permission issues
+          if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
+            return;
+          }
+          console.error('Error sharing result:', err);
+          alert('Error sharing result: An unexpected error occurred. Please try again.');
         });
       } else {
         alert("Sharing not supported on this browser.");
@@ -1213,6 +1231,13 @@
           title: 'FlyTie - Word of the Day',
           text: 'Check out today’s FlyTie Phrase of the Day!',
           url: window.location.href
+        }).catch(err => {
+          // Suppress alerts for user cancellation or permission issues
+          if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
+            return;
+          }
+          console.error('Error sharing:', err);
+          alert('Error sharing: An unexpected error occurred. Please try again.');
         });
       } else {
         alert("Sharing not supported on this browser.");
@@ -1399,6 +1424,7 @@
     loadPhrases();
     loadQuizzes();
     loadComments();
+    showSection('phrase');
     // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
       const dropdownMenu = document.getElementById('dropdownMenu');
