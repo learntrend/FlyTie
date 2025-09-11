@@ -863,24 +863,26 @@
     function toggleBookmark() {
       const bookmarkBtn = document.getElementById('bookmarkBtn');
       const currentPhrase = phrases[currentIndex]?.phrase;
-      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
-      if (bookmarkedIndex === currentIndex) {
-        localStorage.removeItem('bookmarkedIndex');
+      const bookmarkedPhrase = localStorage.getItem('bookmarkedPhrase');
+      
+      if (bookmarkedPhrase === currentPhrase) {
+        localStorage.removeItem('bookmarkedPhrase');
         bookmarkBtn.classList.remove('bookmarked');
         bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
       } else {
-        localStorage.setItem('bookmarkedIndex', currentIndex);
+        localStorage.setItem('bookmarkedPhrase', currentPhrase);
         bookmarkBtn.classList.add('bookmarked');
         bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
       }
     }
     function showBookmarkPopup() {
       toggleDropdown();
-      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
+      const bookmarkedPhrase = localStorage.getItem('bookmarkedPhrase');
       const bookmarkMessage = document.getElementById('bookmarkMessage');
       const bookmarkNav = document.getElementById('bookmarkNav');
-      if (bookmarkedIndex >= 0 && bookmarkedIndex < phrases.length) {
-        bookmarkMessage.textContent = `"${phrases[bookmarkedIndex].phrase}"`;
+      
+      if (bookmarkedPhrase && phrases.some(p => p.phrase === bookmarkedPhrase)) {
+        bookmarkMessage.textContent = `"${bookmarkedPhrase}"`;
         bookmarkNav.style.display = 'flex';
       } else {
         bookmarkMessage.textContent = 'No phrase bookmarked.';
@@ -888,16 +890,29 @@
       }
       document.getElementById('bookmarkPopup').style.display = 'flex';
     }
-    function closeBookmarkPopup() {
-      document.getElementById('bookmarkPopup').style.display = 'none';
+    function updateBookmarkButton() {
+      const bookmarkBtn = document.getElementById('bookmarkBtn');
+      const currentPhrase = phrases[currentIndex]?.phrase;
+      const bookmarkedPhrase = localStorage.getItem('bookmarkedPhrase');
+      
+      if (bookmarkedPhrase === currentPhrase) {
+        bookmarkBtn.classList.add('bookmarked');
+        bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
+      } else {
+        bookmarkBtn.classList.remove('bookmarked');
+        bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
+      }
     }
     function goToBookmark() {
-      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
-      if (bookmarkedIndex >= 0 && bookmarkedIndex < phrases.length) {
-        currentIndex = bookmarkedIndex;
-        showSection('phrase');
-        showPhrase();
-        closeBookmarkPopup();
+      const bookmarkedPhrase = localStorage.getItem('bookmarkedPhrase');
+      if (bookmarkedPhrase) {
+        const phraseIndex = phrases.findIndex(p => p.phrase === bookmarkedPhrase);
+        if (phraseIndex !== -1) {
+          currentIndex = phraseIndex;
+          showSection('phrase');
+          showPhrase();
+          closeBookmarkPopup();
+        }
       }
     }
     function parseCSVLine(line) {
@@ -1054,17 +1069,6 @@
         document.getElementById('phraseHeader').style.display = currentIndex === 0 ? 'block' : 'none';
         loadPhraseLikes();
         updateBookmarkButton();
-      }
-    }
-    function updateBookmarkButton() {
-      const bookmarkBtn = document.getElementById('bookmarkBtn');
-      const bookmarkedIndex = parseInt(localStorage.getItem('bookmarkedIndex'));
-      if (bookmarkedIndex === currentIndex) {
-        bookmarkBtn.classList.add('bookmarked');
-        bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
-      } else {
-        bookmarkBtn.classList.remove('bookmarked');
-        bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
       }
     }
     function prevPhrase() {
