@@ -511,6 +511,46 @@
     .liked-phrases-list button:hover {
       background: #145DA0;
     }
+    .liked-phrases-list .phrase-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin: 5px 0;
+    }
+    .liked-phrases-list .phrase-btn {
+      flex: 1;
+      background: #2E8BC0;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 14px;
+    }
+    .liked-phrases-list .phrase-btn:hover {
+      background: #145DA0;
+    }
+    .liked-phrases-list .remove-btn {
+      background: #fff;
+      color: #2E8BC0;
+      border: none;
+      padding: 5px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      width: 24px;
+      justify-content: center;
+    }
+    .liked-phrases-list .remove-btn:hover {
+      background: #145DA0;
+      color: #fff;
+    }
     #cookieConsent a:hover {
       color: #145DA0;
     }
@@ -849,7 +889,11 @@
         likedPhrasesList.innerHTML = '<p>No liked phrases.</p>';
       } else {
         likedPhrases.forEach((phrase, index) => {
+          const container = document.createElement('div');
+          container.className = 'phrase-container';
+          
           const btn = document.createElement('button');
+          btn.className = 'phrase-btn';
           btn.textContent = phrase;
           btn.onclick = () => {
             const phraseIndex = phrases.findIndex(p => p.phrase === phrase);
@@ -860,10 +904,27 @@
               closeLikedPhrasesPopup();
             }
           };
-          likedPhrasesList.appendChild(btn);
+          
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-btn';
+          removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+          removeBtn.onclick = () => removeLikedPhrase(phrase);
+          
+          container.appendChild(btn);
+          container.appendChild(removeBtn);
+          likedPhrasesList.appendChild(container);
         });
       }
       document.getElementById('likedPhrasesPopup').style.display = 'flex';
+    }
+    function removeLikedPhrase(phrase) {
+      let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
+      likedPhrases = likedPhrases.filter(p => p !== phrase);
+      localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+      if (phrases[currentIndex]?.phrase === phrase) {
+        document.getElementById('likeBtn').disabled = false;
+      }
+      showLikedPhrasesPopup();
     }
     function closeLikedPhrasesPopup() {
       document.getElementById('likedPhrasesPopup').style.display = 'none';
