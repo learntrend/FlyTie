@@ -1021,6 +1021,9 @@
         }
       }
       parts.push(current.trim());
+      while (parts.length < 5) {
+        parts.push('');
+      }
       return parts;
     }
     async function loadPhrases() {
@@ -1052,13 +1055,24 @@
     }
     async function loadQuizzes() {
       try {
-        let res = await fetch(QUIZ_CSV_URL);
+        const cachedQuizzes = localStorage.getItem('cachedQuizzes');
+        const lastCacheTime = localStorage.getItem('quizCacheTime');
+        const now = new Date().getTime();
+        if (cachedQuizzes && lastCacheTime && now - parseInt(lastCacheTime) < 24 * 60 * 60 * 1000) {
+          quizzes = JSON.parse(cachedQuizzes);
+          if (quizzes.length > 0) {
+            updateQuiz();
+            return;
+          }
+        }
+        let res = await fetch(QUIZ_CSV_URL, { cache: 'default' });
         if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         let text = await res.text();
         let lines = text.split(/\r?\n/);
         quizzes = [];
+        const maxRows = 50;
         if (lines.length > 1) {
-          for (let i = 1; i < lines.length; i++) {
+          for (let i = 1; i < lines.length && i <= maxRows; i++) {
             if (lines[i].trim() === '') continue;
             let parts = parseCSVLine(lines[i]);
             if (parts.length >= 5) {
@@ -1072,10 +1086,18 @@
             }
           }
         }
+        localStorage.setItem('cachedQuizzes', JSON.stringify(quizzes));
+        localStorage.setItem('quizCacheTime', now);
         updateQuiz();
       } catch (e) {
         console.error('Error loading quizzes:', e);
-        document.getElementById("quizTitle").textContent = "Error loading quiz.";
+        document.getElementById('quizTitle').textContent = 'Unable to load quiz. Please try again later.';
+        if (localStorage.getItem('cachedQuizzes')) {
+          quizzes = JSON.parse(localStorage.getItem('cachedQuizzes'));
+          if (quizzes.length > 0) {
+            updateQuiz();
+          }
+        }
       }
     }
     async function loadComments(page = 0) {
@@ -1195,24 +1217,33 @@
     function closeInfoPopup() {
       document.getElementById('infoPopup').style.display = 'none';
     }
+    let lastQuizIndex = -1;
     function updateQuiz() {
       if (quizzes.length === 0 || phrases.length === 0) return;
       let p = phrases[currentIndex];
-      let quiz = quizzes.find(q => q.question.toLowerCase().includes(p.phrase.toLowerCase())) || quizzes[0];
+      let quizIndex = lastQuizIndex;
+      if (quizIndex === -1 || !quizzes[quizIndex]?.question.toLowerCase().includes(p.phrase.toLowerCase())) {
+        quizIndex = quizzes.findIndex(q => q.question.toLowerCase().includes(p.phrase.toLowerCase()));
+        if (quizIndex === -1) quizIndex = 0;
+        lastQuizIndex = quizIndex;
+      }
+      let quiz = quizzes[quizIndex];
       document.getElementById('quizTitle').innerHTML = quiz.question;
       let options = [quiz.option1, quiz.option2, quiz.option3];
       let correctAnswer = quiz.answer;
       options = options.sort(() => Math.random() - 0.5);
       let quizOptions = document.getElementById('quizOptions');
-      quizOptions.innerHTML = '';
+      const fragment = document.createDocumentFragment();
       options.forEach(opt => {
         let isCorrect = opt === correctAnswer;
         let btn = document.createElement('button');
         btn.className = 'quiz-option';
         btn.textContent = opt;
         btn.onclick = () => checkAnswer(isCorrect);
-        quizOptions.appendChild(btn);
+        fragment.appendChild(btn);
       });
+      quizOptions.innerHTML = '';
+      quizOptions.appendChild(fragment);
     }
     function checkAnswer(isCorrect) {
       const popup = document.getElementById("popup");
@@ -1501,10 +1532,10 @@
     }
     // Initialize
     updateStreak();
-    loadPhrases();
-    loadQuizzes();
-    loadComments();
-    showSection('phrase');
+    Promise.all([loadPhrases(), loadQuizzes()]).then(() => {
+      showSection('phrase');
+      loadComments();
+    });
     // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
       const dropdownMenu = document.getElementById('dropdownMenu');
