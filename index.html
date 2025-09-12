@@ -802,7 +802,14 @@
           const res = await fetch(url, { ...options, signal: controller.signal });
           clearTimeout(timeoutId);
           if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-          return await res.json();
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            return await res.json();
+          } else if (contentType.includes('text/csv') || contentType.includes('text/plain')) {
+            return await res.text();
+          } else {
+            throw new Error('Unexpected content type: ' + contentType);
+          }
         } catch (e) {
           if (i === retries - 1) throw e;
           console.warn(`Fetch attempt ${i + 1} failed for ${url}: ${e.message}. Retrying...`);
@@ -888,7 +895,6 @@
             });
           }
         }).catch(err => {
-          // Suppress alerts for user cancellation or permission issues
           if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
             return;
           }
@@ -1028,9 +1034,8 @@
     }
     async function loadPhrases() {
       try {
-        let res = await fetch(PHRASES_CSV_URL);
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let text = await res.text();
+        let res = await fetchWithRetry(PHRASES_CSV_URL);
+        let text = res;
         let lines = text.split(/\r?\n/);
         phrases = [];
         if (lines.length > 1) {
@@ -1058,16 +1063,21 @@
         const cachedQuizzes = localStorage.getItem('cachedQuizzes');
         const lastCacheTime = localStorage.getItem('quizCacheTime');
         const now = new Date().getTime();
-        if (cachedQuizzes && lastCacheTime && now - parseInt(lastCacheTime) < 24 * 60 * 60 * 1000) {
-          quizzes = JSON.parse(cachedQuizzes);
-          if (quizzes.length > 0) {
-            updateQuiz();
-            return;
-          }
+        let cachedData = null;
+        try {
+          cachedData = cachedQuizzes ? JSON.parse(cachedQuizzes) : null;
+        } catch (e) {
+          console.warn('Invalid cached quizzes, clearing cache:', e);
+          localStorage.removeItem('cachedQuizzes');
+          localStorage.removeItem('quizCacheTime');
         }
-        let res = await fetch(QUIZ_CSV_URL, { cache: 'default' });
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let text = await res.text();
+        if (cachedData && Array.isArray(cachedData) && cachedData.length > 0 && lastCacheTime && now - parseInt(lastCacheTime) < 24 * 60 * 60 * 1000) {
+          quizzes = cachedData;
+          updateQuiz();
+          return;
+        }
+        let res = await fetchWithRetry(QUIZ_CSV_URL, { cache: 'no-store' });
+        let text = res;
         let lines = text.split(/\r?\n/);
         quizzes = [];
         const maxRows = 50;
@@ -1075,7 +1085,7 @@
           for (let i = 1; i < lines.length && i <= maxRows; i++) {
             if (lines[i].trim() === '') continue;
             let parts = parseCSVLine(lines[i]);
-            if (parts.length >= 5) {
+            if (parts.length >= 5 && parts[0] && parts[1] && parts[2] && parts[3] && parts[4]) {
               quizzes.push({
                 question: parts[0],
                 option1: parts[1],
@@ -1086,64 +1096,91 @@
             }
           }
         }
+        if (quizzes.length === 0) throw new Error('No valid quizzes loaded');
         localStorage.setItem('cachedQuizzes', JSON.stringify(quizzes));
         localStorage.setItem('quizCacheTime', now);
         updateQuiz();
       } catch (e) {
         console.error('Error loading quizzes:', e);
         document.getElementById('quizTitle').textContent = 'Unable to load quiz. Please try again later.';
-        if (localStorage.getItem('cachedQuizzes')) {
-          quizzes = JSON.parse(localStorage.getItem('cachedQuizzes'));
-          if (quizzes.length > 0) {
-            updateQuiz();
-          }
+        localStorage.removeItem('cachedQuizzes');
+        localStorage.removeItem('quizCacheTime');
+        if (!quizzes.length) {
+          loadQuizzes();
         }
       }
     }
     async function loadComments(page = 0) {
       try {
         let data = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
-        if (data.status !== 'success') throw new Error(data.message || 'Failed to load comments');
+        if (!data || !data.status || data.status !== 'success' || !Array.isArray(data.comments)) {
+          throw new Error(data?.message || 'Invalid comment data');
+        }
         let commentList = document.getElementById('commentList');
         commentList.innerHTML = '';
         let start = page * commentsPerPage;
         let end = start + commentsPerPage;
         let comments = data.comments.slice(start, end);
-        comments.forEach(c => {
-          let newComment = document.createElement('div');
-          newComment.className = 'comment';
-          newComment.dataset.commentId = c.id;
-          let commentHTML = `
-            <strong>${c.username}:</strong> ${c.comment}
-            <div class="comment-actions">
-              <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-              <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
-            </div>
-          `;
-          if (c.replies && c.replies.length > 0) {
-            c.replies.forEach(r => {
-              commentHTML += `
-                <div class="reply" data-comment-id="${r.id}">
-                  ${r.reply}
-                  <div class="comment-actions">
-                    <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-                    <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply"><i class="fas fa-heart"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
+        if (comments.length === 0 && page === 0) {
+          commentList.innerHTML = '<p>No comments available.</p>';
+        } else {
+          comments.forEach(c => {
+            let newComment = document.createElement('div');
+            newComment.className = 'comment';
+            newComment.dataset.commentId = c.id;
+            let commentHTML = `
+              <strong>${c.username || 'Anonymous'}:</strong> ${c.comment || ''}
+              <div class="comment-actions">
+                <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+                <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
+              </div>
+            `;
+            if (c.replies && Array.isArray(c.replies)) {
+              c.replies.forEach(r => {
+                commentHTML += `
+                  <div class="reply" data-comment-id="${r.id}">
+                    ${r.username || 'Anonymous'}: ${r.reply || ''}
+                    <div class="comment-actions">
+                      <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+                      <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply"><i class="fas fa-heart"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
+                    </div>
                   </div>
-                </div>
-              `;
-            });
-          }
-          newComment.innerHTML = commentHTML;
-          commentList.appendChild(newComment);
-        });
-        document.getElementById('commentCount').textContent = data.comments.length;
+                `;
+              });
+            }
+            newComment.innerHTML = commentHTML;
+            commentList.appendChild(newComment);
+          });
+        }
+        document.getElementById('commentCount').textContent = data.comments.length || 0;
         document.getElementById('prevComments').disabled = page === 0;
-        document.getElementById('nextComments').disabled = end >= data.comments.length;
+        document.getElementById('nextComments').disabled = end >= (data.comments.length || 0);
       } catch (e) {
         console.error('Error loading comments:', e);
+        document.getElementById('commentList').innerHTML = '<p>Comments unavailable. Please try again later.</p>';
         document.getElementById('commentCount').textContent = '0';
+        document.getElementById('prevComments').disabled = true;
+        document.getElementById('nextComments').disabled = true;
         if (e.name !== 'AbortError') {
-          alert('Error loading comments: Load failed. Please try again later.');
+          console.warn('Retrying comment load...');
+          setTimeout(() => loadComments(page), 5000);
+        }
+      }
+    }
+    async function loadPhraseLikes() {
+      try {
+        let phrase = phrases[currentIndex]?.phrase || '';
+        let data = await fetchWithRetry(`${COMMENT_URL}?action=getLikes&phrase=${encodeURIComponent(phrase)}`);
+        if (!data || !data.status || data.status !== 'success' || typeof data.likes !== 'number') {
+          throw new Error(data?.message || 'Invalid like data');
+        }
+        document.getElementById('phraseLikeCount').textContent = data.likes || 0;
+      } catch (e) {
+        console.error('Error loading likes:', e);
+        document.getElementById('phraseLikeCount').textContent = '0';
+        if (e.name !== 'AbortError') {
+          console.warn('Retrying like load...');
+          setTimeout(() => loadPhraseLikes(), 5000);
         }
       }
     }
@@ -1156,20 +1193,6 @@
     function nextCommentsPage() {
       currentCommentPage++;
       loadComments(currentCommentPage);
-    }
-    async function loadPhraseLikes() {
-      try {
-        let phrase = phrases[currentIndex]?.phrase || '';
-        let data = await fetchWithRetry(`${COMMENT_URL}?action=getLikes&phrase=${encodeURIComponent(phrase)}`);
-        if (data.status !== 'success') throw new Error(data.message || 'Failed to load likes');
-        document.getElementById('phraseLikeCount').textContent = data.likes || 0;
-      } catch (e) {
-        console.error('Error loading likes:', e);
-        document.getElementById('phraseLikeCount').textContent = '0';
-        if (e.name !== 'AbortError') {
-          alert('Error loading likes: Load failed. Please try again later.');
-        }
-      }
     }
     function showPhrase() {
       if (phrases.length > 0) {
@@ -1203,6 +1226,11 @@
       document.getElementById('quizSection').style.display = (section === 'quiz') ? 'block' : 'none';
       if (section === 'quiz') {
         quizStartTime = new Date();
+        if (!quizzes.length) {
+          loadQuizzes();
+        } else {
+          updateQuiz();
+        }
       }
       document.getElementById('logoBtn').disabled = (section === 'phrase');
       document.getElementById('logoBtn').classList.toggle('active', section === 'phrase');
@@ -1219,15 +1247,27 @@
     }
     let lastQuizIndex = -1;
     function updateQuiz() {
-      if (quizzes.length === 0 || phrases.length === 0) return;
+      if (quizzes.length === 0 || phrases.length === 0) {
+        document.getElementById('quizTitle').textContent = 'No quizzes available.';
+        return;
+      }
       let p = phrases[currentIndex];
       let quizIndex = lastQuizIndex;
       if (quizIndex === -1 || !quizzes[quizIndex]?.question.toLowerCase().includes(p.phrase.toLowerCase())) {
         quizIndex = quizzes.findIndex(q => q.question.toLowerCase().includes(p.phrase.toLowerCase()));
-        if (quizIndex === -1) quizIndex = 0;
+        if (quizIndex === -1) {
+          quizIndex = Math.floor(Math.random() * quizzes.length);
+        }
         lastQuizIndex = quizIndex;
       }
       let quiz = quizzes[quizIndex];
+      if (!quiz || !quiz.question || !quiz.option1 || !quiz.option2 || !quiz.option3 || !quiz.answer) {
+        document.getElementById('quizTitle').textContent = 'Invalid quiz data.';
+        localStorage.removeItem('cachedQuizzes');
+        localStorage.removeItem('quizCacheTime');
+        loadQuizzes();
+        return;
+      }
       document.getElementById('quizTitle').innerHTML = quiz.question;
       let options = [quiz.option1, quiz.option2, quiz.option3];
       let correctAnswer = quiz.answer;
@@ -1235,6 +1275,7 @@
       let quizOptions = document.getElementById('quizOptions');
       const fragment = document.createDocumentFragment();
       options.forEach(opt => {
+        if (!opt) return;
         let isCorrect = opt === correctAnswer;
         let btn = document.createElement('button');
         btn.className = 'quiz-option';
@@ -1325,7 +1366,6 @@
           text: `I just got the FlyTie quiz right in ${timeTaken} seconds! 🎉`,
           url: window.location.href
         }).catch(err => {
-          // Suppress alerts for user cancellation or permission issues
           if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
             return;
           }
@@ -1343,7 +1383,6 @@
           text: 'Check out today’s FlyTie Phrase of the Day!',
           url: window.location.href
         }).catch(err => {
-          // Suppress alerts for user cancellation or permission issues
           if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
             return;
           }
