@@ -598,9 +598,10 @@
       <button id="infoBtn" onclick="showInfo()" aria-label="View App Info"><i class="fa-solid fa-circle-info"></i></button>
       <button id="dropdownBtn" onclick="toggleDropdown()" aria-label="More Options"><i class="fa-solid fa-caret-down"></i></button>
       <div id="dropdownMenu" class="dropdown-menu">
-        <button onclick="showStreakPopup()"> My Streak</button>
+        <button onclick="showStreakPopup()">My Streak</button>
         <button onclick="showLikedPhrasesPopup()">Liked Phrases</button>
-        <button onclick="showBookmarkPopup()"> My Bookmark </button>
+        <button onclick="showBookmarkPopup()">My Bookmark</button>
+        <button onclick="showContactPopup()">Contact Us</button>
       </div>
     </div>
     <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
@@ -750,6 +751,17 @@
       </div>
     </div>
   </div>
+  <!-- Contact Us Modal -->
+  <div class="modal" id="contactPopup">
+    <div class="modal-content">
+      <div class="banner">Contact Us</div>
+      <p>Have feedback, questions, or ran into an issue? We'd love to hear from you! Reach out to share your thoughts or get help.</p>
+      <div class="button-row">
+        <a href="mailto:vaada2023@gmail.com" style="text-decoration:none;"><button>Email Us</button></a>
+        <button onclick="closeContactPopup()">Close</button>
+      </div>
+    </div>
+  </div>
   <script>
     let quizStartTime = null;
     let phrases = [];
@@ -823,6 +835,13 @@
     function toggleDropdown() {
       const dropdownMenu = document.getElementById('dropdownMenu');
       dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+    }
+    function showContactPopup() {
+      toggleDropdown();
+      document.getElementById('contactPopup').style.display = 'flex';
+    }
+    function closeContactPopup() {
+      document.getElementById('contactPopup').style.display = 'none';
     }
     function showStreakPopup() {
       toggleDropdown();
