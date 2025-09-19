@@ -558,6 +558,38 @@
       background: #145DA0;
       color: #fff;
     }
+    /* Email Notification Modal Specific Styles */
+    .modal-content .input-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    .modal-content label {
+      flex: 1;
+      text-align: left;
+      font-size: 14px;
+      margin: 0;
+    }
+    .modal-content input[type="checkbox"],
+    .modal-content input[type="email"],
+    .modal-content input[type="time"] {
+      flex: 0 0 auto;
+      width: auto;
+      margin: 0;
+      padding: 5px;
+    }
+    .modal-content input[type="email"],
+    .modal-content input[type="time"] {
+      width: 120px;
+    }
+    .modal-content p {
+      font-size: 12px;
+      color: #555;
+      text-align: left;
+      margin: 5px 0;
+    }
     /* Responsive */
     @media(max-width: 768px) {
       .top-nav {
@@ -602,6 +634,7 @@
         <button onclick="showLikedPhrasesPopup()">Liked Phrases</button>
         <button onclick="showBookmarkPopup()">My Bookmark</button>
         <button onclick="showContactPopup()">Contact Us</button>
+        <button onclick="showEmailNotificationPopup()">Notify me</button>
       </div>
     </div>
     <button onclick="globalShare()" aria-label="Share FlyTie"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
@@ -762,6 +795,31 @@
       </div>
     </div>
   </div>
+  <!-- Email Notification Modal -->
+  <div class="modal" id="emailNotificationPopup">
+    <div class="modal-content">
+      <div class="banner">Daily Email Reminders</div>
+      <p>Receive a daily email for new phrases!</p>
+      <p></p>
+      <div class="input-row">
+        <label for="enableEmailNotifications">Enable Email Notifications:</label>
+        <input type="checkbox" id="enableEmailNotifications">
+      </div>
+      <div class="input-row">
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" placeholder="your@email.com">
+      </div>
+      <div class="input-row">
+        <label for="notificationTime">Daily Notification Time (24h):</label>
+        <input type="time" id="notificationTime" value="09:00">
+      </div>
+      <p>Your email is used only for reminders and stored securely.</p>
+      <div class="button-row">
+        <button onclick="saveEmailNotificationSettings()">Save</button>
+        <button onclick="closeEmailNotificationPopup()">Cancel</button>
+      </div>
+    </div>
+  </div>
   <script>
     let quizStartTime = null;
     let phrases = [];
@@ -849,6 +907,60 @@
     }
     function closeContactPopup() {
       document.getElementById('contactPopup').style.display = 'none';
+    }
+    function showEmailNotificationPopup() {
+      toggleDropdown();
+      document.getElementById('emailNotificationPopup').style.display = 'flex';
+      const settings = JSON.parse(localStorage.getItem('emailNotificationSettings') || '{}');
+      document.getElementById('enableEmailNotifications').checked = settings.enabled || false;
+      document.getElementById('email').value = settings.email || '';
+      document.getElementById('notificationTime').value = settings.time || '09:00';
+    }
+    function closeEmailNotificationPopup() {
+      document.getElementById('emailNotificationPopup').style.display = 'none';
+    }
+    async function saveEmailNotificationSettings() {
+      const enabled = document.getElementById('enableEmailNotifications').checked;
+      const email = document.getElementById('email').value;
+      const time = document.getElementById('notificationTime').value;
+      if (enabled && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+      const settings = { enabled, email, time };
+      localStorage.setItem('emailNotificationSettings', JSON.stringify(settings));
+      const userId = generateUserId();
+      try {
+        await fetchWithRetry(`${COMMENT_URL}?action=saveEmailSubscription`, {
+          method: 'POST',
+          body: new URLSearchParams({
+            userId,
+            email,
+            time,
+            enabled: enabled.toString()
+          })
+        });
+        if (localStorage.getItem('cookieConsent') === 'accepted') {
+          gtag('event', 'notification_subscription', {
+            'type': 'email',
+            'event_category': 'engagement',
+            'event_label': enabled ? 'Email Notification Enabled' : 'Email Notification Disabled'
+          });
+        }
+        alert('Email notifications saved! You\'ll receive reminders as scheduled.');
+      } catch (e) {
+        console.error('Error saving notification settings:', e);
+        alert('Failed to save settings. Please try again.');
+      }
+      closeEmailNotificationPopup();
+    }
+    function generateUserId() {
+      let userId = localStorage.getItem('userId');
+      if (!userId) {
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('userId', userId);
+      }
+      return userId;
     }
     function showStreakPopup() {
       toggleDropdown();
