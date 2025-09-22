@@ -830,7 +830,7 @@
     const commentsPerPage = 10;
     const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
     const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
-    const COMMENT_URL = "https://script.google.com/macros/s/AKfycbySUWJXRCEx9Mi1tIlVuuifcM0PBvxwt7UGsC2xBtWAh9yg5w4seoKY95v8YALNsqSMgQ/exec";
+    const COMMENT_URL = "https://script.google.com/macros/s/AKfycbzYAgZUWQvAuZ5e7u_DzKsgy3Tg222O3u6so5m7dfdEJuJdfJw6kcZ3l5IcESa2aRkCBw/exec";
     function acceptCookies() {
       localStorage.setItem('cookieConsent', 'accepted');
       document.getElementById('cookieConsent').style.display = 'none';
@@ -931,7 +931,7 @@
       localStorage.setItem('emailNotificationSettings', JSON.stringify(settings));
       const userId = generateUserId();
       try {
-        await fetchWithRetry(`${COMMENT_URL}?action=saveEmailSubscription`, {
+        const response = await fetchWithRetry(`${COMMENT_URL}?action=saveEmail`, {
           method: 'POST',
           body: new URLSearchParams({
             userId,
@@ -940,6 +940,9 @@
             enabled: enabled.toString()
           })
         });
+        if (response.status !== 'success') {
+          throw new Error(response.message || 'Failed to save email settings');
+        }
         if (localStorage.getItem('cookieConsent') === 'accepted') {
           gtag('event', 'notification_subscription', {
             'type': 'email',
@@ -948,11 +951,11 @@
           });
         }
         alert('Email notifications saved! You\'ll receive reminders as scheduled.');
+        closeEmailNotificationPopup();
       } catch (e) {
         console.error('Error saving notification settings:', e);
-        alert('Failed to save settings. Please try again.');
+        alert('Failed to save settings: ' + e.message);
       }
-      closeEmailNotificationPopup();
     }
     function generateUserId() {
       let userId = localStorage.getItem('userId');
@@ -1409,55 +1412,122 @@
       const progressFill = document.getElementById("progressFill");
       if (isCorrect) {
         let endTime = new Date();
-        let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : "0.00";
-        quizBanner.textContent = "Correct Answer";
-        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds 🎉`;
-        shareBtn.style.display = "inline-block";
-        shareText.style.display = "inline-block";
-        shareBtn.dataset.time = timeTaken;
-        okBtn.disabled = false;
-        progressBar.style.display = "none";
+        let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : 0;
+        quizBanner.textContent = "Correct!";
+        message.innerHTML = `Great job! You answered correctly in ${timeTaken} seconds!`;
+        shareBtn.style.display = 'inline-block';
+        shareText.style.display = 'inline-block';
+        progressBar.style.display = 'block';
+        progressFill.style.width = '100%';
         if (localStorage.getItem('cookieConsent') === 'accepted') {
           gtag('event', 'quiz_completed', {
             'result': 'correct',
             'time_taken': timeTaken,
             'event_category': 'engagement',
-            'event_label': 'Quiz Completed'
+            'event_label': 'Quiz Correct'
           });
         }
       } else {
-        quizBanner.textContent = "Wrong Answer";
-        message.innerHTML = `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
-        shareBtn.style.display = "none";
-        shareText.style.display = "none";
-        okBtn.disabled = true;
-        progressBar.style.display = "block";
-        progressFill.style.width = "0";
-        setTimeout(() => progressFill.style.width = "100%", 10);
-        setTimeout(() => {
-          okBtn.disabled = false;
-          progressBar.style.display = "none";
-        }, 5000);
+        quizBanner.textContent = "Incorrect";
+        message.innerHTML = `Try again!`;
+        shareBtn.style.display = 'none';
+        shareText.style.display = 'none';
+        progressBar.style.display = 'none';
+        progressFill.style.width = '0';
         if (localStorage.getItem('cookieConsent') === 'accepted') {
           gtag('event', 'quiz_completed', {
             'result': 'incorrect',
             'event_category': 'engagement',
-            'event_label': 'Quiz Completed'
+            'event_label': 'Quiz Incorrect'
           });
         }
       }
-      popup.style.display = "flex";
+      popup.style.display = 'flex';
+      setTimeout(() => {
+        if (isCorrect) {
+          progressFill.style.width = '0';
+          closePopup();
+          updateQuiz();
+        }
+      }, 5000);
     }
     function closePopup() {
-      document.getElementById("popup").style.display = "none";
+      document.getElementById("popup").style.display = 'none';
+      document.getElementById("progressBar").style.display = 'none';
+      document.getElementById("progressFill").style.width = '0';
     }
+    async function likePhrase() {
+      let phrase = phrases[currentIndex]?.phrase || '';
+      let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
+      if (!likedPhrases.includes(phrase)) {
+        likedPhrases.push(phrase);
+        localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+        document.getElementById('likeBtn').disabled = true;
+        try {
+          let data = await fetchWithRetry(`${COMMENT_URL}?action=addLike&phrase=${encodeURIComponent(phrase)}`, {
+            method: 'POST'
+          });
+          if (!data || data.status !== 'success' || typeof data.likes !== 'number') {
+            throw new Error(data?.message || 'Invalid response from server');
+          }
+          document.getElementById('phraseLikeCount').textContent = data.likes;
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'phrase_liked', {
+              'phrase': phrase,
+              'event_category': 'engagement',
+              'event_label': 'Phrase Liked'
+            });
+          }
+        } catch (e) {
+          console.error('Error adding like:', e);
+          likedPhrases = likedPhrases.filter(p => p !== phrase);
+          localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+          document.getElementById('likeBtn').disabled = false;
+          alert('Failed to like phrase: ' + e.message);
+        }
+      }
+    }
+    document.getElementById('likeBtn').onclick = likePhrase;
     function showCommentPopup() {
       document.getElementById('commentPopup').style.display = 'flex';
       document.getElementById('username').value = '';
       document.getElementById('commentText').value = '';
     }
+    document.getElementById('commentBtn').onclick = showCommentPopup;
     function closeCommentPopup() {
       document.getElementById('commentPopup').style.display = 'none';
+    }
+    async function submitComment() {
+      let username = document.getElementById('username').value.trim();
+      let comment = document.getElementById('commentText').value.trim();
+      if (!username || !comment) {
+        alert('Please enter both a username and a comment.');
+        return;
+      }
+      try {
+        let data = await fetchWithRetry(`${COMMENT_URL}?action=addComment`, {
+          method: 'POST',
+          body: new URLSearchParams({
+            timestamp: new Date().toISOString(),
+            username: username,
+            comment: comment
+          })
+        });
+        if (!data || data.status !== 'success' || !data.id) {
+          throw new Error(data?.message || 'Invalid response from server');
+        }
+        if (localStorage.getItem('cookieConsent') === 'accepted') {
+          gtag('event', 'comment_added', {
+            'event_category': 'engagement',
+            'event_label': 'Comment Added'
+          });
+        }
+        closeCommentPopup();
+        loadComments(currentCommentPage);
+      } catch (e) {
+        console.error('Error adding comment:', e);
+        alert('Failed to add comment: ' + e.message);
+      }
     }
     function showReplyPopup(commentId) {
       currentCommentId = commentId;
@@ -1469,31 +1539,79 @@
       document.getElementById('replyPopup').style.display = 'none';
       currentCommentId = null;
     }
-    function shareResult() {
-      const shareBtn = document.getElementById("shareBtn");
-      let timeTaken = shareBtn.dataset.time || "?";
-      if (navigator.share) {
-        navigator.share({
-          title: 'FlyTie - Phrase of the Day Quiz',
-          text: `I just got the FlyTie quiz right in ${timeTaken} seconds! 🎉`,
-          url: window.location.href
-        }).catch(err => {
-          if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
-            return;
-          }
-          console.error('Error sharing result:', err);
-          alert('Error sharing result: An unexpected error occurred. Please try again.');
+    async function submitReply() {
+      let username = document.getElementById('replyUsername').value.trim();
+      let reply = document.getElementById('replyText').value.trim();
+      if (!username || !reply || !currentCommentId) {
+        alert('Please enter both a username and a reply.');
+        return;
+      }
+      try {
+        let data = await fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
+          method: 'POST',
+          body: new URLSearchParams({
+            timestamp: new Date().toISOString(),
+            username: username,
+            comment: reply,
+            parentId: currentCommentId
+          })
         });
-      } else {
-        alert("Sharing not supported on this browser.");
+        if (!data || data.status !== 'success' || !data.id) {
+          throw new Error(data?.message || 'Invalid response from server');
+        }
+        if (localStorage.getItem('cookieConsent') === 'accepted') {
+          gtag('event', 'reply_added', {
+            'event_category': 'engagement',
+            'event_label': 'Reply Added'
+          });
+        }
+        closeReplyPopup();
+        loadComments(currentCommentPage);
+      } catch (e) {
+        console.error('Error adding reply:', e);
+        alert('Failed to add reply: ' + e.message);
+      }
+    }
+    async function likeComment(commentId, isReply) {
+      try {
+        let data = await fetchWithRetry(`${COMMENT_URL}?action=addCommentLike&commentId=${encodeURIComponent(commentId)}&isReply=${isReply}`, {
+          method: 'POST'
+        });
+        if (!data || data.status !== 'success' || typeof data.likes !== 'number') {
+          throw new Error(data?.message || 'Invalid response from server');
+        }
+        let commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
+        if (commentElement) {
+          let likeCountElement = commentElement.querySelector('.like-count');
+          if (likeCountElement) {
+            likeCountElement.textContent = data.likes;
+          }
+        }
+        if (localStorage.getItem('cookieConsent') === 'accepted') {
+          gtag('event', 'comment_liked', {
+            'is_reply': isReply,
+            'event_category': 'engagement',
+            'event_label': isReply ? 'Reply Liked' : 'Comment Liked'
+          });
+        }
+      } catch (e) {
+        console.error('Error liking comment:', e);
+        alert('Failed to like comment: ' + e.message);
       }
     }
     function globalShare() {
       if (navigator.share) {
         navigator.share({
-          title: 'FlyTie - Word of the Day',
-          text: 'Check out today’s FlyTie Phrase of the Day!',
+          title: 'FlyTie - Phrase of the Day',
+          text: 'Check out FlyTie to learn new professional phrases daily!',
           url: window.location.href
+        }).then(() => {
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'global_share', {
+              'event_category': 'engagement',
+              'event_label': 'Global Share'
+            });
+          }
         }).catch(err => {
           if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
             return;
@@ -1505,196 +1623,37 @@
         alert("Sharing not supported on this browser.");
       }
     }
-    document.getElementById('likeBtn').onclick = async function() {
-      this.disabled = true;
-      let phrase = phrases[currentIndex]?.phrase || '';
-      try {
-        let formData = new URLSearchParams();
-        formData.append('action', 'addLike');
-        formData.append('phrase', phrase);
-        let res = await fetch(COMMENT_URL, {
-          method: 'POST',
-          body: formData
-        });
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let data = await res.json();
-        if (data.status === 'success') {
-          let count = parseInt(document.getElementById('phraseLikeCount').textContent);
-          document.getElementById('phraseLikeCount').textContent = count + 1;
-          let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
-          if (!likedPhrases.includes(phrase)) {
-            likedPhrases.push(phrase);
-            localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-          }
+    function shareResult() {
+      if (navigator.share) {
+        let p = phrases[currentIndex];
+        let quiz = quizzes[lastQuizIndex];
+        navigator.share({
+          title: 'FlyTie - Quiz Result',
+          text: `I got the quiz right for "${p.phrase}" on FlyTie! Try it yourself!`,
+          url: window.location.href
+        }).then(() => {
           if (localStorage.getItem('cookieConsent') === 'accepted') {
-            gtag('event', 'like_phrase', {
-              'phrase': phrase,
+            gtag('event', 'quiz_result_shared', {
               'event_category': 'engagement',
-              'event_label': 'Phrase Liked'
+              'event_label': 'Quiz Result Shared'
             });
           }
-        } else {
-          throw new Error(data.message || 'Failed to add like');
-        }
-      } catch (e) {
-        console.error('Error adding like:', e);
-        alert('Error adding like: ' + e.message);
-        this.disabled = false;
-      }
-    };
-    document.getElementById('commentBtn').onclick = function() {
-      showCommentPopup();
-    };
-    async function submitComment() {
-      let username = document.getElementById('username').value.trim();
-      let comment = document.getElementById('commentText').value.trim();
-      if (!username || !comment) {
-        alert('Please enter your name and comment.');
-        return;
-      }
-      try {
-        let formData = new URLSearchParams();
-        formData.append('action', 'addComment');
-        formData.append('timestamp', new Date().toISOString());
-        formData.append('username', username);
-        formData.append('comment', comment);
-        let res = await fetch(COMMENT_URL, {
-          method: 'POST',
-          body: formData
+        }).catch(err => {
+          if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
+            return;
+          }
+          console.error('Error sharing quiz result:', err);
+          alert('Error sharing quiz result: An unexpected error occurred. Please try again.');
         });
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let data = await res.json();
-        if (data.status === 'success') {
-          let newComment = document.createElement('div');
-          newComment.className = 'comment';
-          newComment.dataset.commentId = data.id;
-          newComment.innerHTML = `
-            <strong>${username}:</strong> ${comment}
-            <div class="comment-actions">
-              <button onclick="showReplyPopup('${data.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-              <button onclick="likeComment('${data.id}', false)" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
-            </div>
-          `;
-          let commentList = document.getElementById('commentList');
-          commentList.insertBefore(newComment, commentList.firstChild);
-          while (commentList.children.length > commentsPerPage) {
-            commentList.removeChild(commentList.lastChild);
-          }
-          let ccount = parseInt(document.getElementById('commentCount').textContent);
-          document.getElementById('commentCount').textContent = ccount + 1;
-          closeCommentPopup();
-          if (localStorage.getItem('cookieConsent') === 'accepted') {
-            gtag('event', 'submit_comment', {
-              'event_category': 'engagement',
-              'event_label': 'Comment Submitted'
-            });
-          }
-        } else {
-          throw new Error(data.message || 'Failed to add comment');
-        }
-      } catch (e) {
-        console.error('Error adding comment:', e);
-        alert('Error adding comment: ' + e.message);
+      } else {
+        alert("Sharing not supported on this browser.");
       }
     }
-    async function submitReply() {
-      let username = document.getElementById('replyUsername').value.trim();
-      let reply = document.getElementById('replyText').value.trim();
-      if (!username || !reply || !currentCommentId) {
-        alert('Please enter your name and reply.');
-        return;
-      }
-      try {
-        let formData = new URLSearchParams();
-        formData.append('action', 'addReply');
-        formData.append('timestamp', new Date().toISOString());
-        formData.append('username', username);
-        formData.append('comment', reply);
-        formData.append('parentId', currentCommentId);
-        let res = await fetch(COMMENT_URL, {
-          method: 'POST',
-          body: formData
-        });
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let data = await res.json();
-        if (data.status === 'success') {
-          let newReply = document.createElement('div');
-          newReply.className = 'reply';
-          newReply.dataset.commentId = data.id;
-          newReply.innerHTML = `
-            ${username}: ${reply}
-            <div class="comment-actions">
-              <button onclick="showReplyPopup('${currentCommentId}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-              <button onclick="likeComment('${data.id}', true)" aria-label="Like this reply"><i class="fas fa-heart"></i> Like (<span class="like-count">0</span>)</button>
-            </div>
-          `;
-          let parentComment = document.querySelector(`.comment[data-comment-id="${currentCommentId}"]`);
-          parentComment.appendChild(newReply);
-          let ccount = parseInt(document.getElementById('commentCount').textContent);
-          document.getElementById('commentCount').textContent = ccount + 1;
-          closeReplyPopup();
-          if (localStorage.getItem('cookieConsent') === 'accepted') {
-            gtag('event', 'submit_reply', {
-              'event_category': 'engagement',
-              'event_label': 'Reply Submitted'
-            });
-          }
-        } else {
-          throw new Error(data.message || 'Failed to add reply');
-        }
-      } catch (e) {
-        console.error('Error adding reply:', e);
-        alert('Error adding reply: ' + e.message);
-      }
-    }
-    async function likeComment(commentId, isReply) {
-      let button = document.querySelector(`[data-comment-id="${commentId}"] button[aria-label="${isReply ? 'Like this reply' : 'Like this comment'}"]`);
-      button.disabled = true;
-      try {
-        let formData = new URLSearchParams();
-        formData.append('action', 'addCommentLike');
-        formData.append('commentId', commentId);
-        formData.append('isReply', isReply);
-        let res = await fetch(COMMENT_URL, {
-          method: 'POST',
-          body: formData
-        });
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        let data = await res.json();
-        if (data.status === 'success') {
-          let likeCountSpan = button.querySelector('.like-count');
-          let count = parseInt(likeCountSpan.textContent);
-          likeCountSpan.textContent = count + 1;
-          if (localStorage.getItem('cookieConsent') === 'accepted') {
-            gtag('event', 'like_comment', {
-              'is_reply': isReply,
-              'event_category': 'engagement',
-              'event_label': isReply ? 'Reply Liked' : 'Comment Liked'
-            });
-          }
-        } else {
-          throw new Error(data.message || 'Failed to add comment like');
-        }
-      } catch (e) {
-        console.error('Error liking comment:', e);
-        alert('Error liking comment: ' + e.message);
-        button.disabled = false;
-      }
-    }
-    // Initialize
-    updateStreak();
-    Promise.all([loadPhrases(), loadQuizzes()]).then(() => {
-      showSection('phrase');
+    window.onload = () => {
+      updateStreak();
+      loadPhrases();
       loadComments();
-    });
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-      const dropdownMenu = document.getElementById('dropdownMenu');
-      const dropdownBtn = document.getElementById('dropdownBtn');
-      if (!dropdownMenu.contains(event.target) && !dropdownBtn.contains(event.target)) {
-        dropdownMenu.style.display = 'none';
-      }
-    });
+    };
   </script>
 </body>
 </html>
