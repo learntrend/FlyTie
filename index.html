@@ -35,6 +35,9 @@
       height: 100vh;
       flex-direction: column;
     }
+    body.no-scroll {
+      overflow: hidden;
+    }
     /* Top Nav */
     .top-nav {
       display: flex;
@@ -905,13 +908,16 @@
     function showContactPopup() {
       toggleDropdown();
       document.getElementById('contactPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
     }
     function closeContactPopup() {
       document.getElementById('contactPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
     }
     function showEmailNotificationPopup() {
       toggleDropdown();
       document.getElementById('emailNotificationPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
       const settings = JSON.parse(localStorage.getItem('emailNotificationSettings') || '{}');
       document.getElementById('enableEmailNotifications').checked = settings.enabled || false;
       document.getElementById('email').value = settings.email || '';
@@ -919,6 +925,7 @@
     }
     function closeEmailNotificationPopup() {
       document.getElementById('emailNotificationPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
     }
     async function saveEmailNotificationSettings() {
       const enabled = document.getElementById('enableEmailNotifications').checked;
@@ -991,9 +998,11 @@
         streakShareBtn.style.display = 'none';
       }
       document.getElementById('streakPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
     }
     function closeStreakPopup() {
       document.getElementById('streakPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
     }
     function shareStreak() {
       const streak = parseInt(localStorage.getItem('streak')) || 0;
@@ -1057,6 +1066,7 @@
         });
       }
       document.getElementById('likedPhrasesPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
     }
     function removeLikedPhrase(phrase) {
       let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
@@ -1069,6 +1079,7 @@
     }
     function closeLikedPhrasesPopup() {
       document.getElementById('likedPhrasesPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
     }
     function toggleBookmark() {
       const bookmarkBtn = document.getElementById('bookmarkBtn');
@@ -1099,6 +1110,7 @@
         bookmarkNav.style.display = 'none';
       }
       document.getElementById('bookmarkPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
     }
     function updateBookmarkButton() {
       const bookmarkBtn = document.getElementById('bookmarkBtn');
@@ -1127,6 +1139,7 @@
     }
     function closeBookmarkPopup() {
       document.getElementById('bookmarkPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
     }
     function parseCSVLine(line) {
       let parts = [];
@@ -1357,9 +1370,11 @@
     }
     function showInfo() {
       document.getElementById('infoPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
     }
     function closeInfoPopup() {
       document.getElementById('infoPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
     }
     let lastQuizIndex = -1;
     function updateQuiz() {
@@ -1444,6 +1459,7 @@
         }
       }
       popup.style.display = 'flex';
+      document.body.classList.add('no-scroll');
       setTimeout(() => {
         if (isCorrect) {
           progressFill.style.width = '0';
@@ -1456,6 +1472,7 @@
       document.getElementById("popup").style.display = 'none';
       document.getElementById("progressBar").style.display = 'none';
       document.getElementById("progressFill").style.width = '0';
+      document.body.classList.remove('no-scroll');
     }
     async function likePhrase() {
       let phrase = phrases[currentIndex]?.phrase || '';
@@ -1491,12 +1508,14 @@
     document.getElementById('likeBtn').onclick = likePhrase;
     function showCommentPopup() {
       document.getElementById('commentPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
       document.getElementById('username').value = '';
       document.getElementById('commentText').value = '';
     }
     document.getElementById('commentBtn').onclick = showCommentPopup;
     function closeCommentPopup() {
       document.getElementById('commentPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
     }
     async function submitComment() {
       let username = document.getElementById('username').value.trim();
@@ -1533,11 +1552,13 @@
     function showReplyPopup(commentId) {
       currentCommentId = commentId;
       document.getElementById('replyPopup').style.display = 'flex';
+      document.body.classList.add('no-scroll');
       document.getElementById('replyUsername').value = '';
       document.getElementById('replyText').value = '';
     }
     function closeReplyPopup() {
       document.getElementById('replyPopup').style.display = 'none';
+      document.body.classList.remove('no-scroll');
       currentCommentId = null;
     }
     async function submitReply() {
