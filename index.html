@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
@@ -1268,7 +1268,7 @@
               c.replies.forEach(r => {
                 commentHTML += `
                   <div class="reply" data-comment-id="${r.id}">
-                    ${r.username || 'Anonymous'}: ${r.reply || ''}
+                    ${r.username ? `<strong>${r.username}:</strong> ` : ''}${r.reply || ''}
                     <div class="comment-actions">
                       <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
                       <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply"><i class="fas fa-heart"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
