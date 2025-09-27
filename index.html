@@ -498,6 +498,9 @@
       margin-bottom: 8px;
       box-sizing: border-box;
     }
+    .modal-content #popupMessage {
+      text-align: center;
+    }
     .liked-phrases-list button {
       background: #2E8BC0;
       color: #fff;
@@ -903,7 +906,21 @@
     }
     function toggleDropdown() {
       const dropdownMenu = document.getElementById('dropdownMenu');
-      dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+      const isOpen = dropdownMenu.style.display === 'block';
+      dropdownMenu.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen) {
+        document.addEventListener('click', closeDropdownOnOutsideClick);
+      } else {
+        document.removeEventListener('click', closeDropdownOnOutsideClick);
+      }
+    }
+    function closeDropdownOnOutsideClick(event) {
+      const dropdownMenu = document.getElementById('dropdownMenu');
+      const dropdownBtn = document.getElementById('dropdownBtn');
+      if (!dropdownMenu.contains(event.target) && !dropdownBtn.contains(event.target)) {
+        dropdownMenu.style.display = 'none';
+        document.removeEventListener('click', closeDropdownOnOutsideClick);
+      }
     }
     function showContactPopup() {
       toggleDropdown();
@@ -1377,6 +1394,7 @@
       document.body.classList.remove('no-scroll');
     }
     let lastQuizIndex = -1;
+    let currentOptions = []; // Store current quiz options order
     function updateQuiz() {
       if (quizzes.length === 0 || phrases.length === 0) {
         document.getElementById('quizTitle').textContent = 'No quizzes available.';
@@ -1390,6 +1408,10 @@
           quizIndex = Math.floor(Math.random() * quizzes.length);
         }
         lastQuizIndex = quizIndex;
+        // Shuffle options only when selecting a new quiz
+        let quiz = quizzes[quizIndex];
+        currentOptions = [quiz.option1, quiz.option2, quiz.option3];
+        currentOptions = currentOptions.sort(() => Math.random() - 0.5);
       }
       let quiz = quizzes[quizIndex];
       if (!quiz || !quiz.question || !quiz.option1 || !quiz.option2 || !quiz.option3 || !quiz.answer) {
@@ -1400,14 +1422,11 @@
         return;
       }
       document.getElementById('quizTitle').innerHTML = quiz.question;
-      let options = [quiz.option1, quiz.option2, quiz.option3];
-      let correctAnswer = quiz.answer;
-      options = options.sort(() => Math.random() - 0.5);
       let quizOptions = document.getElementById('quizOptions');
       const fragment = document.createDocumentFragment();
-      options.forEach(opt => {
+      currentOptions.forEach(opt => {
         if (!opt) return;
-        let isCorrect = opt === correctAnswer;
+        let isCorrect = opt === quiz.answer;
         let btn = document.createElement('button');
         btn.className = 'quiz-option';
         btn.textContent = opt;
@@ -1429,12 +1448,13 @@
       if (isCorrect) {
         let endTime = new Date();
         let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : 0;
-        quizBanner.textContent = "Correct!";
-        message.innerHTML = `Great job! You answered correctly in ${timeTaken} seconds!`;
-        shareBtn.style.display = 'inline-block';
-        shareText.style.display = 'inline-block';
-        progressBar.style.display = 'block';
-        progressFill.style.width = '100%';
+        quizBanner.textContent = "Correct Answer";
+        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds 🎉`;
+        shareBtn.style.display = "inline-block";
+        shareText.style.display = "inline-block";
+        shareBtn.dataset.time = timeTaken;
+        okBtn.disabled = false;
+        progressBar.style.display = "none";
         if (localStorage.getItem('cookieConsent') === 'accepted') {
           gtag('event', 'quiz_completed', {
             'result': 'correct',
@@ -1444,29 +1464,22 @@
           });
         }
       } else {
-        quizBanner.textContent = "Incorrect";
-        message.innerHTML = `Try again!`;
-        shareBtn.style.display = 'none';
-        shareText.style.display = 'none';
-        progressBar.style.display = 'none';
-        progressFill.style.width = '0';
-        if (localStorage.getItem('cookieConsent') === 'accepted') {
-          gtag('event', 'quiz_completed', {
-            'result': 'incorrect',
-            'event_category': 'engagement',
-            'event_label': 'Quiz Incorrect'
-          });
-        }
-      }
-      popup.style.display = 'flex';
-      document.body.classList.add('no-scroll');
-      setTimeout(() => {
-        if (isCorrect) {
-          progressFill.style.width = '0';
+        quizBanner.textContent = "Wrong Answer";
+        message.innerHTML = `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
+        shareBtn.style.display = "none";
+        shareText.style.display = "none";
+        okBtn.disabled = true;
+        progressBar.style.display = "block";
+        progressFill.style.width = "0";
+        setTimeout(() => progressFill.style.width = "100%", 10);
+        setTimeout(() => {
+          okBtn.disabled = false;
+          progressBar.style.display = "none";
           closePopup();
-          updateQuiz();
-        }
-      }, 5000);
+        }, 5000);
+      }
+      popup.style.display = "flex";
+      document.body.classList.add('no-scroll');
     }
     function closePopup() {
       document.getElementById("popup").style.display = 'none';
