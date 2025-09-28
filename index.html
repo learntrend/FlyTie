@@ -1163,7 +1163,7 @@
     }
     async function loadPhrases() {
       try {
-        let res = await fetchWithRetry(PHRASES_CSV_URL);
+        let res = await fetchWithRetry(PHRASES_CSV_URL, { cache: 'no-store' });
         let text = res;
         let lines = text.split(/\r?\n/);
         phrases = [];
@@ -1189,22 +1189,6 @@
     }
     async function loadQuizzes() {
       try {
-        const cachedQuizzes = localStorage.getItem('cachedQuizzes');
-        const lastCacheTime = localStorage.getItem('quizCacheTime');
-        const now = new Date().getTime();
-        let cachedData = null;
-        try {
-          cachedData = cachedQuizzes ? JSON.parse(cachedQuizzes) : null;
-        } catch (e) {
-          console.warn('Invalid cached quizzes, clearing cache:', e);
-          localStorage.removeItem('cachedQuizzes');
-          localStorage.removeItem('quizCacheTime');
-        }
-        if (cachedData && Array.isArray(cachedData) && cachedData.length > 0 && lastCacheTime && now - parseInt(lastCacheTime) < 24 * 60 * 60 * 1000) {
-          quizzes = cachedData;
-          updateQuiz();
-          return;
-        }
         let res = await fetchWithRetry(QUIZ_CSV_URL, { cache: 'no-store' });
         let text = res;
         let lines = text.split(/\r?\n/);
@@ -1225,18 +1209,10 @@
             }
           }
         }
-        if (quizzes.length === 0) throw new Error('No valid quizzes loaded');
-        localStorage.setItem('cachedQuizzes', JSON.stringify(quizzes));
-        localStorage.setItem('quizCacheTime', now);
         updateQuiz();
       } catch (e) {
         console.error('Error loading quizzes:', e);
         document.getElementById('quizTitle').textContent = 'Unable to load quiz. Please try again later.';
-        localStorage.removeItem('cachedQuizzes');
-        localStorage.removeItem('quizCacheTime');
-        if (!quizzes.length) {
-          loadQuizzes();
-        }
       }
     }
     async function loadComments(page = 0) {
