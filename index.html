@@ -1655,11 +1655,14 @@
     }
     function shareResult() {
       if (navigator.share) {
-        let p = phrases[currentIndex];
-        let quiz = quizzes[lastQuizIndex];
+        let timeTaken = document.getElementById('shareBtn').dataset.time || '0';
+        let timeUnit = parseFloat(timeTaken) >= 60 ? 'minutes' : 'seconds';
+        if (timeUnit === 'minutes') {
+          timeTaken = (parseFloat(timeTaken) / 60).toFixed(2);
+        }
         navigator.share({
           title: 'FlyTie - Quiz Result',
-          text: `I got the quiz right for "${p.phrase}" on FlyTie! Try it yourself!`,
+          text: `On FlyTie, I got the quiz right in ${timeTaken} ${timeUnit}! Try it yourself!`,
           url: window.location.href
         }).then(() => {
           if (localStorage.getItem('cookieConsent') === 'accepted') {
