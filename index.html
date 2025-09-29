@@ -1145,9 +1145,15 @@
       let parts = [];
       let current = '';
       let inQuote = false;
-      for (let char of line) {
+      for (let i = 0; i < line.length; i++) {
+        let char = line[i];
         if (char === '"') {
-          inQuote = !inQuote;
+          if (inQuote && line[i + 1] === '"') {
+            current += '"';
+            i++; // Skip the next quote
+          } else {
+            inQuote = !inQuote;
+          }
         } else if (char === ',' && !inQuote) {
           parts.push(current.trim());
           current = '';
@@ -1393,7 +1399,7 @@
         loadQuizzes();
         return;
       }
-      document.getElementById('quizTitle').innerHTML = quiz.question;
+      document.getElementById('quizTitle').innerText = quiz.question;
       let quizOptions = document.getElementById('quizOptions');
       const fragment = document.createDocumentFragment();
       currentOptions.forEach(opt => {
