@@ -1049,9 +1049,9 @@
             const phraseIndex = phrases.findIndex(p => p.phrase === phrase);
             if (phraseIndex !== -1) {
               currentIndex = phraseIndex;
+              closeLikedPhrasesPopup();
               showSection('phrase');
               showPhrase();
-              closeLikedPhrasesPopup();
             }
           };
           
@@ -1131,9 +1131,9 @@
         const phraseIndex = phrases.findIndex(p => p.phrase === bookmarkedPhrase);
         if (phraseIndex !== -1) {
           currentIndex = phraseIndex;
+          closeBookmarkPopup();
           showSection('phrase');
           showPhrase();
-          closeBookmarkPopup();
         }
       }
     }
