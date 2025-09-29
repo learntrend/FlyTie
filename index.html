@@ -1145,9 +1145,11 @@
       let parts = [];
       let current = '';
       let inQuote = false;
-      for (let char of line) {
+      for (let i = 0; i < line.length; i++) {
+        let char = line[i];
         if (char === '"') {
           inQuote = !inQuote;
+          continue; // Skip the quote character
         } else if (char === ',' && !inQuote) {
           parts.push(current.trim());
           current = '';
@@ -1393,7 +1395,12 @@
         loadQuizzes();
         return;
       }
-      document.getElementById('quizTitle').innerHTML = quiz.question;
+      // Ensure the phrase in the question is wrapped in quotes
+      let questionText = quiz.question;
+      if (p.phrase && questionText.includes(p.phrase)) {
+        questionText = questionText.replace(p.phrase, `"${p.phrase}"`);
+      }
+      document.getElementById('quizTitle').innerText = questionText;
       let quizOptions = document.getElementById('quizOptions');
       const fragment = document.createDocumentFragment();
       currentOptions.forEach(opt => {
