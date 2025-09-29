@@ -1427,7 +1427,7 @@
         let endTime = new Date();
         let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : 0;
         quizBanner.textContent = "Correct Answer";
-        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds 🎉`;
+        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds!`;
         shareBtn.style.display = "inline-block";
         shareText.style.display = "inline-block";
         shareBtn.dataset.time = timeTaken;
