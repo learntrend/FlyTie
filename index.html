@@ -382,6 +382,12 @@
       flex-direction: column;
       justify-content: space-between;
     }
+    .modal-content.correct-answer .share-icon {
+      display: block !important;
+    }
+    .modal-content.correct-answer .share-text {
+      display: block !important;
+    }
     .modal-content .banner {
       background: #2E8BC0;
       color: #fff;
@@ -1387,13 +1393,13 @@
       const popupButtonRow = document.getElementById("popupButtonRow");
       const progressBar = document.getElementById("progressBar");
       const progressFill = document.getElementById("progressFill");
+      const modalContent = document.querySelector(".modal-content");
       if (isCorrect) {
         let endTime = new Date();
         let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : 0;
         quizBanner.textContent = "Correct Answer";
-        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds 🎉`;
-        shareBtn.style.display = "inline-block";
-        shareText.style.display = "inline-block";
+        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds!!`;
+        modalContent.classList.add("correct-answer");
         shareBtn.dataset.time = timeTaken;
         popupButtonRow.innerHTML = '<button id="okBtn" onclick="closePopup()">OK</button>';
         progressBar.style.display = "none";
@@ -1408,6 +1414,7 @@
       } else {
         quizBanner.textContent = "Wrong Answer";
         message.innerHTML = `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
+        modalContent.classList.remove("correct-answer");
         shareBtn.style.display = "none";
         shareText.style.display = "none";
         popupButtonRow.innerHTML = ''; // Remove OK button for wrong answer
@@ -1426,6 +1433,7 @@
       document.getElementById("popup").style.display = 'none';
       document.getElementById("progressBar").style.display = 'none';
       document.getElementById("progressFill").style.width = '0';
+      document.querySelector(".modal-content").classList.remove("correct-answer");
       document.body.classList.remove('no-scroll');
     }
     async function likePhrase() {
@@ -1575,16 +1583,23 @@
       }
     }
     function globalShare() {
+      const isPhraseSection = document.getElementById('phraseSection').style.display === 'block';
+      const currentPhrase = phrases[currentIndex]?.phrase || '';
       if (navigator.share) {
-        navigator.share({
+        const shareData = isPhraseSection ? {
+          title: 'FlyTie - Phrase of the Day',
+          text: `Did you know what does "${currentPhrase}" mean? Check out FlyTie app to learn more on such professional phrases daily!`,
+          url: window.location.href
+        } : {
           title: 'FlyTie - Phrase of the Day',
           text: 'Check out FlyTie to learn new professional phrases daily!',
           url: window.location.href
-        }).then(() => {
+        };
+        navigator.share(shareData).then(() => {
           if (localStorage.getItem('cookieConsent') === 'accepted') {
             gtag('event', 'global_share', {
               'event_category': 'engagement',
-              'event_label': 'Global Share'
+              'event_label': isPhraseSection ? 'Phrase Share' : 'Global Share'
             });
           }
         }).catch(err => {
