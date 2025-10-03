@@ -138,9 +138,26 @@
       padding: 10px;
     }
     .bookmark-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
+      background: #fff;
+      color: #2E8BC0;
+      border: none;
+      padding: 8px Manual
+    }
+    .bookmark-btn:hover:enabled {
+      background: #145DA0;
+      color: #fff;
+    }
+    .bookmark-btn.bookmarked i {
+      color: #2E8BC0;
+    }
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      align-items: center;
+    }
+    .action-buttons button {
       background: #fff;
       color: #2E8BC0;
       border: none;
@@ -153,49 +170,17 @@
       align-items: center;
       gap: 5px;
     }
-    .bookmark-btn:hover:enabled {
+    .action-buttons button:hover:enabled {
       background: #145DA0;
       color: #fff;
     }
-    .bookmark-btn.bookmarked i {
-      color: #2E8BC0;
-    }
-    .like-section {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      font-size: 14px;
-      color: #555;
-      margin-top: 20px;
-      align-items: center;
-      text-align: left;
-    }
-    .like-section .like-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .like-section button {
-      background: #fff;
-      color: #2E8BC0;
-      border: none;
-      padding: 8px 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.3s;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .like-section button:hover:enabled {
-      background: #145DA0;
-      color: #fff;
-    }
-    .like-section button:disabled {
+    .action-buttons button:disabled {
       background: #ccc;
       color: #666;
       cursor: not-allowed;
+    }
+    .action-buttons button:disabled i.fas.fa-heart {
+      color: red;
     }
     /* Navigation buttons */
     .nav-buttons {
@@ -634,22 +619,19 @@
     <!-- Phrase Section -->
     <div id="phraseSection">
       <div class="card">
-        <button id="bookmarkBtn" class="bookmark-btn" onclick="toggleBookmark()" aria-label="Bookmark this phrase"><i class="fa-regular fa-bookmark"></i></button>
         <div class="quiz-header" id="phraseHeader" style="display:none;">Phrase of the Day</div>
         <h2 id="phraseText">Loading...</h2>
         <p><strong>Meaning:</strong> <span id="meaningText">Loading...</span></p>
         <p><strong>Usage:</strong> <span id="usageText">Loading...</span></p>
+        <div class="action-buttons">
+          <button id="likeBtn" onclick="likePhrase()" aria-label="Like this phrase"><i class="fas fa-heart"></i></button>
+          <button id="shareBtn" onclick="globalShare()" aria-label="Share this phrase"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
+          <button id="bookmarkBtn" class="bookmark-btn" onclick="toggleBookmark()" aria-label="Bookmark this phrase"><i class="fa-regular fa-bookmark"></i></button>
+        </div>
         <!-- Navigation -->
         <div class="nav-buttons">
           <button id="prevPhraseBtn" onclick="prevPhrase()" aria-label="Previous Phrase"><i class="fas fa-chevron-left"></i></button>
           <button id="nextPhraseBtn" onclick="nextPhrase()" aria-label="Next Phrase"><i class="fas fa-chevron-right"></i></button>
-        </div>
-        <div class="like-section">
-          <div class="like-row">
-            <span>Did you find this interesting?</span>
-            <button id="likeBtn" aria-label="Like this phrase"><i class="fas fa-heart"></i> Like</button>
-          </div>
-          <div>Total likes for this phrase: <span id="phraseLikeCount">0</span></div>
         </div>
       </div>
     </div>
@@ -1278,23 +1260,6 @@
         }
       }
     }
-    async function loadPhraseLikes() {
-      try {
-        let phrase = phrases[currentIndex]?.phrase || '';
-        let data = await fetchWithRetry(`${COMMENT_URL}?action=getLikes&phrase=${encodeURIComponent(phrase)}`);
-        if (!data || !data.status || data.status !== 'success' || typeof data.likes !== 'number') {
-          throw new Error(data?.message || 'Invalid like data');
-        }
-        document.getElementById('phraseLikeCount').textContent = data.likes || 0;
-      } catch (e) {
-        console.error('Error loading likes:', e);
-        document.getElementById('phraseLikeCount').textContent = '0';
-        if (e.name !== 'AbortError') {
-          console.warn('Retrying like load...');
-          setTimeout(() => loadPhraseLikes(), 5000);
-        }
-      }
-    }
     function prevCommentsPage() {
       if (currentCommentPage > 0) {
         currentCommentPage--;
@@ -1314,7 +1279,6 @@
         const likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
         document.getElementById('likeBtn').disabled = likedPhrases.includes(p.phrase);
         document.getElementById('phraseHeader').style.display = currentIndex === 0 ? 'block' : 'none';
-        loadPhraseLikes();
         updateBookmarkButton();
         // Disable navigation buttons based on current index
         document.getElementById('prevPhraseBtn').disabled = currentIndex === 0;
@@ -1427,7 +1391,7 @@
         let endTime = new Date();
         let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : 0;
         quizBanner.textContent = "Correct Answer";
-        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds!`;
+        message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds 🎉`;
         shareBtn.style.display = "inline-block";
         shareText.style.display = "inline-block";
         shareBtn.dataset.time = timeTaken;
@@ -1478,7 +1442,6 @@
           if (!data || data.status !== 'success' || typeof data.likes !== 'number') {
             throw new Error(data?.message || 'Invalid response from server');
           }
-          document.getElementById('phraseLikeCount').textContent = data.likes;
           if (localStorage.getItem('cookieConsent') === 'accepted') {
             gtag('event', 'phrase_liked', {
               'phrase': phrase,
