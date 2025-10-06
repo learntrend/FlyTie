@@ -637,7 +637,7 @@
         <p><strong>Meaning:</strong> <span id="meaningText">Loading...</span></p>
         <p><strong>Usage:</strong> <span id="usageText">Loading...</span></p>
         <div class="action-buttons">
-          <button id="likeBtn" onclick="likePhrase()" aria-label="Like this phrase"><i class="fa-regular fa-heart"></i></button>
+          <button id="likeBtn" onclick="toggleLikePhrase()" aria-label="Like this phrase"><i class="fa-regular fa-heart"></i></button>
           <button id="shareBtn" onclick="globalShare()" aria-label="Share this phrase"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
           <button id="bookmarkBtn" class="bookmark-btn" onclick="toggleBookmark()" aria-label="Bookmark this phrase"><i class="fa-regular fa-bookmark"></i></button>
         </div>
@@ -1166,7 +1166,6 @@
       likedPhrases = likedPhrases.filter(p => p !== phrase);
       localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
       if (phrases[currentIndex]?.phrase === phrase) {
-        document.getElementById('likeBtn').disabled = false;
         document.getElementById('likeBtn').innerHTML = '<i class="fa-regular fa-heart"></i>';
       }
       showLikedPhrasesPopup();
@@ -1394,7 +1393,6 @@
         document.getElementById("usageText").textContent = p.usage;
         const likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
         const isLiked = likedPhrases.includes(p.phrase);
-        document.getElementById('likeBtn').disabled = isLiked;
         document.getElementById('likeBtn').innerHTML = `<i class="${isLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"></i>`;
         document.getElementById('phraseHeader').style.display = currentIndex === 0 ? 'block' : 'none';
         updateBookmarkButton();
@@ -1548,14 +1546,43 @@
       document.querySelector(".modal-content").classList.remove("correct-answer");
       document.body.classList.remove('no-scroll');
     }
-    async function likePhrase() {
+    async function toggleLikePhrase() {
       let phrase = phrases[currentIndex]?.phrase || '';
       let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
-      if (!likedPhrases.includes(phrase)) {
+      const isLiked = likedPhrases.includes(phrase);
+      const likeBtn = document.getElementById('likeBtn');
+      
+      if (isLiked) {
+        // Unlike the phrase
+        likedPhrases = likedPhrases.filter(p => p !== phrase);
+        localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+        try {
+          let data = await fetchWithRetry(`${COMMENT_URL}?action=removeLike&phrase=${encodeURIComponent(phrase)}`, {
+            method: 'POST'
+          });
+          if (!data || data.status !== 'success') {
+            throw new Error(data?.message || 'Invalid response from server');
+          }
+          if (localStorage.getItem('cookieConsent') === 'accepted') {
+            gtag('event', 'phrase_unliked', {
+              'phrase': phrase,
+              'event_category': 'engagement',
+              'event_label': 'Phrase Unliked'
+            });
+          }
+        } catch (e) {
+          console.error('Error removing like:', e);
+          likedPhrases.push(phrase);
+          localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+          likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+          alert('Failed to unlike phrase: ' + e.message);
+        }
+      } else {
+        // Like the phrase
         likedPhrases.push(phrase);
         localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-        document.getElementById('likeBtn').disabled = true;
-        document.getElementById('likeBtn').innerHTML = '<i class="fa-solid fa-heart"></i>';
+        likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
         try {
           let data = await fetchWithRetry(`${COMMENT_URL}?action=addLike&phrase=${encodeURIComponent(phrase)}`, {
             method: 'POST'
@@ -1574,13 +1601,12 @@
           console.error('Error adding like:', e);
           likedPhrases = likedPhrases.filter(p => p !== phrase);
           localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-          document.getElementById('likeBtn').disabled = false;
-          document.getElementById('likeBtn').innerHTML = '<i class="fa-regular fa-heart"></i>';
+          likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
           alert('Failed to like phrase: ' + e.message);
         }
       }
     }
-    document.getElementById('likeBtn').onclick = likePhrase;
+    document.getElementById('likeBtn').onclick = toggleLikePhrase;
     function showCommentPopup() {
       document.getElementById('commentPopup').style.display = 'flex';
       document.body.classList.add('no-scroll');
