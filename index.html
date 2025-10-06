@@ -171,8 +171,7 @@
       gap: 5px;
     }
     .action-buttons button:hover:enabled {
-      background: #145DA0;
-      color: #fff;
+      color: red;
     }
     .action-buttons button:disabled {
       background: #ccc;
@@ -630,7 +629,7 @@
         <p><strong>Meaning:</strong> <span id="meaningText">Loading...</span></p>
         <p><strong>Usage:</strong> <span id="usageText">Loading...</span></p>
         <div class="action-buttons">
-          <button id="likeBtn" onclick="likePhrase()" aria-label="Like this phrase"><i class="fas fa-heart"></i></button>
+          <button id="likeBtn" onclick="likePhrase()" aria-label="Like this phrase"><i class="fa-regular fa-heart"></i></button>
           <button id="shareBtn" onclick="globalShare()" aria-label="Share this phrase"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
           <button id="bookmarkBtn" class="bookmark-btn" onclick="toggleBookmark()" aria-label="Bookmark this phrase"><i class="fa-regular fa-bookmark"></i></button>
         </div>
@@ -697,6 +696,7 @@
       <p class="tick-item"><i class="fa-solid fa-user-group"></i> Share your quiz results with your friends</p>
       <p class="tick-item"><i class="fa-solid fa-comment"></i> Add comments to connect with others</p>
       <p class="tick-item"><i class="fa-solid fa-medal"></i> Check & Share your streak </p>
+      <p class="tick-item"><i class="fa-solid fa-bell"></i> Get updated on the new phrases daily </p>
       <div class="button-row">
         <button onclick="closeInfoPopup()">OK</button>
       </div>
@@ -1231,7 +1231,7 @@
               <strong>${c.username || 'Anonymous'}:</strong> ${c.comment || ''}
               <div class="comment-actions">
                 <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-                <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment"><i class="fas fa-heart"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
+                <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment"><i class="fa-regular fa-heart"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
               </div>
             `;
             if (c.replies && Array.isArray(c.replies)) {
@@ -1241,7 +1241,7 @@
                     ${r.username ? `<strong>${r.username}:</strong> ` : ''}${r.reply || ''}
                     <div class="comment-actions">
                       <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-                      <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply"><i class="fas fa-heart"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
+                      <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply"><i class="fa-regular fa-heart"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
                     </div>
                   </div>
                 `;
