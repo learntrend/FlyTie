@@ -917,7 +917,7 @@
     const commentsPerPage = 10;
     const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
     const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
-    const COMMENT_URL = "https://script.google.com/macros/s/AKfycbzYAgZUWQvAuZ5e7u_DzKsgy3Tg222O3u6so5m7dfdEJuJdfJw6kcZ3l5IcESa2aRkCBw/exec";
+    const COMMENT_URL = "https://script.google.com/macros/s/AKfycbxl7f418cVMQujizOsmtfyJSmhEvDMVGgu0CZqP5mUkiliGbC8N95dg6LNnXqrXeFkSUA/exec";
     function acceptCookies() {
       localStorage.setItem('cookieConsent', 'accepted');
       document.getElementById('cookieConsent').style.display = 'none';
@@ -1165,14 +1165,38 @@
       document.getElementById('likedPhrasesPopup').style.display = 'flex';
       document.body.classList.add('no-scroll');
     }
-    function removeLikedPhrase(phrase) {
-      let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
-      likedPhrases = likedPhrases.filter(p => p !== phrase);
-      localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-      if (phrases[currentIndex]?.phrase === phrase) {
-        document.getElementById('likeBtn').innerHTML = '<i class="fa-regular fa-heart"></i>';
-      }
-      showLikedPhrasesPopup();
+    async function removeLikedPhrase(phrase) {
+    let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
+    likedPhrases = likedPhrases.filter(p => p !== phrase);
+    localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+    const likeBtn = document.getElementById('likeBtn');
+    if (phrases[currentIndex]?.phrase === phrase) {
+        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+    }
+    try {
+    let data = await fetchWithRetry(`${COMMENT_URL}?action=removeLike&phrase=${encodeURIComponent(phrase)}`, {
+      method: 'POST'
+    });
+    if (!data || data.status !== 'success') {
+      throw new Error(data?.message || 'Invalid response from server');
+    }
+    if (localStorage.getItem('cookieConsent') === 'accepted') {
+      gtag('event', 'phrase_unliked', {
+        'phrase': phrase,
+        'event_category': 'engagement',
+        'event_label': 'Phrase Unliked'
+      });
+    }
+    } catch (e) {
+    console.error('Error removing like:', e);
+    likedPhrases.push(phrase); // Revert local change on error
+    localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+    if (phrases[currentIndex]?.phrase === phrase) {
+      likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+    }
+    alert('Failed to unlike phrase: ' + e.message);
+    }
+    showLikedPhrasesPopup();
     }
     function closeLikedPhrasesPopup() {
       document.getElementById('likedPhrasesPopup').style.display = 'none';
