@@ -1813,37 +1813,41 @@ async function removeLikedPhrase(phrase) {
              alert('Failed to like comment: ' + e.message);
            }
          }
-         function globalShare() {
-           const isPhraseSection = document.getElementById('phraseSection').style.display === 'block';
-           const currentPhrase = phrases[currentIndex]?.phrase || '';
-           if (navigator.share) {
-             const shareData = isPhraseSection ? {
-               title: 'FlyTie - Phrase of the Day',
-               text: `Did you know what does "${currentPhrase}" mean? Check out FlyTie app to learn more on such professional phrases daily!`,
-               url: window.location.href
-             } : {
-               title: 'FlyTie - Phrase of the Day',
-               text: 'Check out FlyTie to learn new professional phrases daily!',
-               url: window.location.href
-             };
-             navigator.share(shareData).then(() => {
-               if (localStorage.getItem('cookieConsent') === 'accepted') {
-                 gtag('event', 'global_share', {
-                   'event_category': 'engagement',
-                   'event_label': isPhraseSection ? 'Phrase Share' : 'Global Share'
-                 });
-               }
-             }).catch(err => {
-               if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
-                 return;
-               }
-               console.error('Error sharing:', err);
-               alert('Error sharing: An unexpected error occurred. Please try again.');
-             });
-           } else {
-             alert("Sharing not supported on this browser.");
-           }
-         }
+      function globalShare() {
+  const isPhraseSection = document.getElementById('phraseSection').style.display === 'block';
+  const currentPhrase = phrases[currentIndex]?.phrase || '';
+  if (navigator.share) {
+    const shareData = isPhraseSection ? {
+      title: 'FlyTie - Phrase of the Day',
+      text: `Did you know what does "${currentPhrase}" mean? Check out FlyTie app to learn more on such professional phrases daily!`,
+      url: window.location.href
+    } : {
+      title: 'FlyTie - Phrase of the Day',
+      text: 'Check out FlyTie to learn new professional phrases daily!',
+      url: window.location.href
+    };
+    navigator.share(shareData).then(() => {
+      if (localStorage.getItem('cookieConsent') === 'accepted') {
+        gtag('event', 'global_share', {
+          'event_category': 'engagement',
+          'event_label': isPhraseSection ? 'Phrase Share' : 'Global Share'
+        });
+      }
+      document.activeElement.blur(); // Remove focus to reset Share button state
+    }).catch(err => {
+      if (err.name === 'AbortError' || err.name === 'NotAllowedError' || err.message.toLowerCase().includes('cancel')) {
+        document.activeElement.blur(); // Remove focus even if share is canceled
+        return;
+      }
+      console.error('Error sharing:', err);
+      alert('Error sharing: An unexpected error occurred. Please try again.');
+      document.activeElement.blur(); // Remove focus on error
+    });
+  } else {
+    alert("Sharing not supported on this browser.");
+    document.activeElement.blur(); // Remove focus when alert is shown
+  }
+}
          function shareResult() {
            if (navigator.share) {
              let timeTaken = document.getElementById('shareBtn').dataset.time || '0';
