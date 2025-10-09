@@ -158,10 +158,12 @@
          align-items: center;
          gap: 5px;
          }
- .action-buttons button:hover:enabled:not(#shareBtn):not(#bookmarkBtn) {
+
+
+.action-buttons button:hover:enabled:not(#shareBtn):not(#bookmarkBtn) {
   color: red;
 }
-.action-buttons #shareBtn:hover:enabled, .action-buttons #shareBtn:active:enabled {
+.action-buttons #shareBtn:hover:enabled {
   color: #fff;
   background: #145DA0;
 }
@@ -181,6 +183,9 @@
 }
 .bookmark-btn.bookmarked i {
   color: #fff;
+}
+.bookmark-btn:not(.bookmarked) {
+  background: #fff;
 }
 .bookmark-btn:not(.bookmarked) i {
   color: #2E8BC0;
