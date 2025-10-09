@@ -137,19 +137,7 @@
          .card p {
          padding: 10px;
          }
-         .bookmark-btn {
-         background: #fff;
-         color: #2E8BC0;
-         border: none;
-         padding: 8px;
-         }
-         .bookmark-btn:hover:enabled {
-         background: #145DA0;
-         color: #fff;
-         }
-         .bookmark-btn.bookmarked i {
-         color: #2E8BC0;
-         }
+
          .action-buttons {
          display: flex;
          justify-content: center;
@@ -170,9 +158,33 @@
          align-items: center;
          gap: 5px;
          }
-         .action-buttons button:hover:enabled {
-         color: red;
-         }
+ .action-buttons button:hover:enabled:not(#shareBtn):not(#bookmarkBtn) {
+  color: red;
+}
+.action-buttons #shareBtn:hover:enabled, .action-buttons #shareBtn:active:enabled {
+  color: #fff;
+  background: #145DA0;
+}
+.bookmark-btn {
+  background: #fff;
+  color: #2E8BC0;
+  border: none;
+  padding: 8px;
+}
+.bookmark-btn.bookmarked {
+  background: #145DA0;
+  color: #fff;
+}
+.bookmark-btn:hover:enabled {
+  background: #145DA0;
+  color: #fff;
+}
+.bookmark-btn.bookmarked i {
+  color: #fff;
+}
+.bookmark-btn:not(.bookmarked) i {
+  color: #2E8BC0;
+}
          .action-buttons button:disabled {
          background: #ccc;
          color: #666;
