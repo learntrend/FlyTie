@@ -1182,6 +1182,9 @@ async function removeLikedPhrase(phrase) {
     likedPhrasesList.innerHTML = '<p>No liked phrases.</p>';
   }
   
+  // Remove focus from any button
+  document.activeElement.blur();
+  
   // Update the like button in the phrase section if viewing the same phrase
   const likeBtn = document.getElementById('likeBtn');
   if (phrases[currentIndex]?.phrase === phrase) {
