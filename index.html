@@ -184,10 +184,14 @@
 .bookmark-btn.bookmarked i {
   color: #fff;
 }
-.bookmark-btn:not(.bookmarked) {
-  background: #fff;
+.action-buttons .bookmark-btn:not(.bookmarked) {
+  background: #fff !important;
 }
 .bookmark-btn:not(.bookmarked) i {
+  color: #2E8BC0;
+}
+.bookmark-btn:not(.bookmarked):active, .bookmark-btn:not(.bookmarked):focus {
+  background: #fff;
   color: #2E8BC0;
 }
          .action-buttons button:disabled {
