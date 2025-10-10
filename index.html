@@ -1428,66 +1428,65 @@ async function removeLikedPhrase(phrase) {
            }
          }
          async function loadComments(page = 0) {
-           try {
-             let data = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
-             if (!data || !data.status || data.status !== 'success' || !Array.isArray(data.comments)) {
-               throw new Error(data?.message || 'Invalid comment data');
-             }
-             let commentList = document.getElementById('commentList');
-             commentList.innerHTML = '';
-             let start = page * commentsPerPage;
-             let end = start + commentsPerPage;
-             let comments = data.comments.slice(start, end);
-             const userId = generateUserId();
-             const likedComments = JSON.parse(localStorage.getItem('likedComments') || '[]');
-             if (comments.length === 0 && page === 0) {
-               commentList.innerHTML = '<p>No comments available.</p>';
-             } else {
-               comments.forEach(c => {
-                 let newComment = document.createElement('div');
-                 newComment.className = 'comment';
-                 newComment.dataset.commentId = c.id;
-                 const isCommentLiked = likedComments.includes(c.id);
-                 let commentHTML = `
-                   <strong>${c.username || 'Anonymous'}:</strong> ${c.comment || ''}
-                   <div class="comment-actions">
-                     <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-                     <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment" ${isCommentLiked ? 'disabled' : ''}><i class="${isCommentLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
-                   </div>
-                 `;
-                 if (c.replies && Array.isArray(c.replies)) {
-                   c.replies.forEach(r => {
-                     const isReplyLiked = likedComments.includes(r.id);
-                     commentHTML += `
-                       <div class="reply" data-comment-id="${r.id}">
-                         ${r.username ? `<strong>${r.username}:</strong> ` : ''}${r.reply || ''}
-                         <div class="comment-actions">
-                           <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-                           <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply" ${isReplyLiked ? 'disabled' : ''}><i class="${isReplyLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
-                         </div>
-                       </div>
-                     `;
-                   });
-                 }
-                 newComment.innerHTML = commentHTML;
-                 commentList.appendChild(newComment);
-               });
-             }
-             document.getElementById('commentCount').textContent = data.comments.length || 0;
-             document.getElementById('prevComments').disabled = page === 0;
-             document.getElementById('nextComments').disabled = end >= (data.comments.length || 0);
-           } catch (e) {
-             console.error('Error loading comments:', e);
-             document.getElementById('commentList').innerHTML = '<p>Comments unavailable. Please try again later.</p>';
-             document.getElementById('commentCount').textContent = '0';
-             document.getElementById('prevComments').disabled = true;
-             document.getElementById('nextComments').disabled = true;
-             if (e.name !== 'AbortError') {
-               console.warn('Retrying comment load...');
-               setTimeout(() => loadComments(page), 5000);
-             }
-           }
-         }
+  try {
+    let data = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
+    if (!data || !data.status || data.status !== 'success' || !Array.isArray(data.comments)) {
+      throw new Error(data?.message || 'Invalid comment data');
+    }
+    let commentList = document.getElementById('commentList');
+    commentList.innerHTML = '';
+    let start = page * commentsPerPage;
+    let end = start + commentsPerPage;
+    let comments = data.comments.slice(start, end);
+    const userId = generateUserId();
+    const likedComments = JSON.parse(localStorage.getItem('likedComments') || '[]');
+    if (comments.length === 0 && page === 0) {
+      commentList.innerHTML = '<p>No comments available.</p>';
+    } else {
+      comments.forEach(c => {
+        let newComment = document.createElement('div');
+        newComment.className = 'comment';
+        newComment.dataset.commentId = c.id;
+        const isCommentLiked = likedComments.includes(c.id);
+        let commentHTML = `
+          <strong>${c.username || 'Anonymous'}:</strong> ${c.comment || ''}
+          <div class="comment-actions">
+            <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
+            <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment" ${isCommentLiked ? 'disabled' : ''}><i class="${isCommentLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"></i> Like (<span class="like-count">${c.likes || 0}</span>)</button>
+          </div>
+        `;
+        if (c.replies && Array.isArray(c.replies)) {
+          c.replies.forEach(r => {
+            const isReplyLiked = likedComments.includes(r.id);
+            commentHTML += `
+              <div class="reply" data-comment-id="${r.id}">
+                ${r.username ? `<strong>${r.username}:</strong> ` : ''}${r.reply || ''}
+                <div class="comment-actions">
+                  <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply" ${isReplyLiked ? 'disabled' : ''}><i class="${isReplyLiked ? 'fa-solid fa-heart' : 'fa-regular fa-heart'}"></i> Like (<span class="like-count">${r.likes || 0}</span>)</button>
+                </div>
+              </div>
+            `;
+          });
+        }
+        newComment.innerHTML = commentHTML;
+        commentList.appendChild(newComment);
+      });
+    }
+    document.getElementById('commentCount').textContent = data.comments.length || 0;
+    document.getElementById('prevComments').disabled = page === 0;
+    document.getElementById('nextComments').disabled = end >= (data.comments.length || 0);
+  } catch (e) {
+    console.error('Error loading comments:', e);
+    document.getElementById('commentList').innerHTML = '<p>Comments unavailable. Please try again later.</p>';
+    document.getElementById('commentCount').textContent = '0';
+    document.getElementById('prevComments').disabled = true;
+    document.getElementById('nextComments').disabled = true;
+    if (e.name !== 'AbortError') {
+      console.warn('Retrying comment load...');
+      setTimeout(() => loadComments(page), 5000);
+    }
+  }
+}
          function prevCommentsPage() {
            if (currentCommentPage > 0) {
              currentCommentPage--;
