@@ -324,6 +324,29 @@
          .action-buttons button i.fa-solid.fa-heart {
          color: #ff0000;
          }
+/* Instagram-like like button animation */
+.action-buttons #likeBtn.liked-anim i {
+  animation: likePulse 0.3s ease-out;
+}
+
+@keyframes likePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .action-buttons #likeBtn.liked-anim i {
+    animation: none;
+  }
+}
          .liked-phrases-list .remove-btn i.fa-solid.fa-heart {
          color: #ff0000;
          }
@@ -1638,65 +1661,67 @@ async function removeLikedPhrase(phrase) {
            document.body.classList.remove('no-scroll');
          }
          async function toggleLikePhrase() {
-           let phrase = phrases[currentIndex]?.phrase || '';
-           let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
-           const isLiked = likedPhrases.includes(phrase);
-           const likeBtn = document.getElementById('likeBtn');
-           
-           if (isLiked) {
-             // Unlike the phrase
-             likedPhrases = likedPhrases.filter(p => p !== phrase);
-             localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-             likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-             try {
-               let data = await fetchWithRetry(`${COMMENT_URL}?action=removeLike&phrase=${encodeURIComponent(phrase)}`, {
-                 method: 'POST'
-               });
-               if (!data || data.status !== 'success') {
-                 throw new Error(data?.message || 'Invalid response from server');
-               }
-               if (localStorage.getItem('cookieConsent') === 'accepted') {
-                 gtag('event', 'phrase_unliked', {
-                   'phrase': phrase,
-                   'event_category': 'engagement',
-                   'event_label': 'Phrase Unliked'
-                 });
-               }
-             } catch (e) {
-               console.error('Error removing like:', e);
-               likedPhrases.push(phrase);
-               localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-               likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-               alert('Failed to unlike phrase: ' + e.message);
-             }
-           } else {
-             // Like the phrase
-             likedPhrases.push(phrase);
-             localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-             likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-             try {
-               let data = await fetchWithRetry(`${COMMENT_URL}?action=addLike&phrase=${encodeURIComponent(phrase)}`, {
-                 method: 'POST'
-               });
-               if (!data || data.status !== 'success' || typeof data.likes !== 'number') {
-                 throw new Error(data?.message || 'Invalid response from server');
-               }
-               if (localStorage.getItem('cookieConsent') === 'accepted') {
-                 gtag('event', 'phrase_liked', {
-                   'phrase': phrase,
-                   'event_category': 'engagement',
-                   'event_label': 'Phrase Liked'
-                 });
-               }
-             } catch (e) {
-               console.error('Error adding like:', e);
-               likedPhrases = likedPhrases.filter(p => p !== phrase);
-               localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
-               likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-               alert('Failed to like phrase: ' + e.message);
-             }
-           }
-         }
+  let phrase = phrases[currentIndex]?.phrase || '';
+  let likedPhrases = JSON.parse(localStorage.getItem('likedPhrases') || '[]');
+  const isLiked = likedPhrases.includes(phrase);
+  const likeBtn = document.getElementById('likeBtn');
+  
+  if (isLiked) {
+    // Unlike the phrase
+    likedPhrases = likedPhrases.filter(p => p !== phrase);
+    localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+    likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+    try {
+      let data = await fetchWithRetry(`${COMMENT_URL}?action=removeLike&phrase=${encodeURIComponent(phrase)}`, {
+        method: 'POST'
+      });
+      if (!data || data.status !== 'success') {
+        throw new Error(data?.message || 'Invalid response from server');
+      }
+      if (localStorage.getItem('cookieConsent') === 'accepted') {
+        gtag('event', 'phrase_unliked', {
+          'phrase': phrase,
+          'event_category': 'engagement',
+          'event_label': 'Phrase Unliked'
+        });
+      }
+    } catch (e) {
+      console.error('Error removing like:', e);
+      likedPhrases.push(phrase);
+      localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+      likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+      alert('Failed to unlike phrase: ' + e.message);
+    }
+  } else {
+    // Like the phrase with animation
+    likeBtn.classList.add('liked-anim'); // Trigger animation
+    setTimeout(() => likeBtn.classList.remove('liked-anim'), 300); // Remove class after animation
+    likedPhrases.push(phrase);
+    localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+    likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+    try {
+      let data = await fetchWithRetry(`${COMMENT_URL}?action=addLike&phrase=${encodeURIComponent(phrase)}`, {
+        method: 'POST'
+      });
+      if (!data || data.status !== 'success' || typeof data.likes !== 'number') {
+        throw new Error(data?.message || 'Invalid response from server');
+      }
+      if (localStorage.getItem('cookieConsent') === 'accepted') {
+        gtag('event', 'phrase_liked', {
+          'phrase': phrase,
+          'event_category': 'engagement',
+          'event_label': 'Phrase Liked'
+        });
+      }
+    } catch (e) {
+      console.error('Error adding like:', e);
+      likedPhrases = likedPhrases.filter(p => p !== phrase);
+      localStorage.setItem('likedPhrases', JSON.stringify(likedPhrases));
+      likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+      alert('Failed to like phrase: ' + e.message);
+    }
+  }
+}
          document.getElementById('likeBtn').onclick = toggleLikePhrase;
          function showCommentPopup() {
            document.getElementById('commentPopup').style.display = 'flex';
