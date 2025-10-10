@@ -1733,38 +1733,7 @@ async function removeLikedPhrase(phrase) {
            document.getElementById('commentPopup').style.display = 'none';
            document.body.classList.remove('no-scroll');
          }
-         async function submitComment() {
-           let username = document.getElementById('username').value.trim();
-           let comment = document.getElementById('commentText').value.trim();
-           if (!username || !comment) {
-             alert('Please enter both a username and a comment.');
-             return;
-           }
-           try {
-             let data = await fetchWithRetry(`${COMMENT_URL}?action=addComment`, {
-               method: 'POST',
-               body: new URLSearchParams({
-                 timestamp: new Date().toISOString(),
-                 username: username,
-                 comment: comment
-               })
-             });
-             if (!data || data.status !== 'success' || !data.id) {
-               throw new Error(data?.message || 'Invalid response from server');
-             }
-             if (localStorage.getItem('cookieConsent') === 'accepted') {
-               gtag('event', 'comment_added', {
-                 'event_category': 'engagement',
-                 'event_label': 'Comment Added'
-               });
-             }
-             closeCommentPopup();
-             loadComments(currentCommentPage);
-           } catch (e) {
-             console.error('Error adding comment:', e);
-             alert('Failed to add comment: ' + e.message);
-           }
-         }
+         
          function showReplyPopup(commentId) {
            currentCommentId = commentId;
            document.getElementById('replyPopup').style.display = 'flex';
@@ -1777,39 +1746,78 @@ async function removeLikedPhrase(phrase) {
            document.body.classList.remove('no-scroll');
            currentCommentId = null;
          }
-         async function submitReply() {
-           let username = document.getElementById('replyUsername').value.trim();
-           let reply = document.getElementById('replyText').value.trim();
-           if (!username || !reply || !currentCommentId) {
-             alert('Please enter both a username and a reply.');
-             return;
-           }
-           try {
-             let data = await fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
-               method: 'POST',
-               body: new URLSearchParams({
-                 timestamp: new Date().toISOString(),
-                 username: username,
-                 comment: reply,
-                 parentId: currentCommentId
-               })
-             });
-             if (!data || data.status !== 'success' || !data.id) {
-               throw new Error(data?.message || 'Invalid response from server');
-             }
-             if (localStorage.getItem('cookieConsent') === 'accepted') {
-               gtag('event', 'reply_added', {
-                 'event_category': 'engagement',
-                 'event_label': 'Reply Added'
-               });
-             }
-             closeReplyPopup();
-             loadComments(currentCommentPage);
-           } catch (e) {
-             console.error('Error adding reply:', e);
-             alert('Failed to add reply: ' + e.message);
-           }
-         }
+         function submitComment() {
+  let username = document.getElementById('username').value.trim();
+  let comment = document.getElementById('commentText').value.trim();
+  const submitCommentBtn = document.querySelector('#commentPopup button[onclick="submitComment()"]');
+  if (!username || !comment) {
+    alert('Please enter both a username and a comment.');
+    return;
+  }
+  submitCommentBtn.disabled = true; // Disable button to prevent multiple clicks
+  closeCommentPopup(); // Close popup immediately
+  fetchWithRetry(`${COMMENT_URL}?action=addComment`, {
+    method: 'POST',
+    body: new URLSearchParams({
+      timestamp: new Date().toISOString(),
+      username: username,
+      comment: comment
+    })
+  }).then(data => {
+    if (!data || data.status !== 'success' || !data.id) {
+      throw new Error(data?.message || 'Invalid response from server');
+    }
+    if (localStorage.getItem('cookieConsent') === 'accepted') {
+      gtag('event', 'comment_added', {
+        'event_category': 'engagement',
+        'event_label': 'Comment Added'
+      });
+    }
+    loadComments(currentCommentPage);
+  }).catch(e => {
+    console.error('Error adding comment:', e);
+    alert('Failed to add comment: ' + e.message);
+  }).finally(() => {
+    submitCommentBtn.disabled = false; // Re-enable button
+  });
+}
+
+function submitReply() {
+  let username = document.getElementById('replyUsername').value.trim();
+  let reply = document.getElementById('replyText').value.trim();
+  const submitReplyBtn = document.querySelector('#replyPopup button[onclick="submitReply()"]');
+  if (!username || !reply || !currentCommentId) {
+    alert('Please enter both a username and a reply.');
+    return;
+  }
+  submitReplyBtn.disabled = true; // Disable button to prevent multiple clicks
+  closeReplyPopup(); // Close popup immediately
+  fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
+    method: 'POST',
+    body: new URLSearchParams({
+      timestamp: new Date().toISOString(),
+      username: username,
+      comment: reply,
+      parentId: currentCommentId
+    })
+  }).then(data => {
+    if (!data || data.status !== 'success' || !data.id) {
+      throw new Error(data?.message || 'Invalid response from server');
+    }
+    if (localStorage.getItem('cookieConsent') === 'accepted') {
+      gtag('event', 'reply_added', {
+        'event_category': 'engagement',
+        'event_label': 'Reply Added'
+      });
+    }
+    loadComments(currentCommentPage);
+  }).catch(e => {
+    console.error('Error adding reply:', e);
+    alert('Failed to add reply: ' + e.message);
+  }).finally(() => {
+    submitReplyBtn.disabled = false; // Re-enable button
+  });
+}
          async function likeComment(commentId, isReply) {
            const userId = generateUserId();
            let likedComments = JSON.parse(localStorage.getItem('likedComments') || '[]');
