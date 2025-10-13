@@ -1763,6 +1763,7 @@
       function showReplyPopup(commentId) {
         console.log("showReplyPopup called with commentId:", commentId);
         currentCommentId = commentId;
+	console.log('currentCommentId set to:', currentCommentId);
         console.log("currentCommentId set to:", currentCommentId);
         document.getElementById("replyPopup").style.display = "flex";
         document.body.classList.add("no-scroll");
@@ -1813,54 +1814,57 @@
           });
       }
 
-      function submitReply() {
-        let username = document.getElementById("replyUsername").value.trim();
-        let reply = document.getElementById("replyText").value.trim();
-        const submitReplyBtn = document.querySelector('#replyPopup button[onclick="submitReply()"]');
-        console.log("submitReply called with currentCommentId:", currentCommentId);
-        if (!username || !reply) {
-          alert("Please enter both a username and a reply.");
-          return;
-        }
-        if (!currentCommentId) {
-          console.error("Error: currentCommentId is null or undefined");
-          alert("Error: No parent comment selected. Please try again.");
-          return;
-        }
-        submitReplyBtn.disabled = true; // Disable button to prevent multiple clicks
-        closeReplyPopup(); // Close popup immediately
-        const requestBody = new URLSearchParams({
-          timestamp: new Date().toISOString(),
-          username: username,
-          comment: reply,
-          parentId: currentCommentId,
-        });
-        console.log("Request body:", requestBody.toString());
-        fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
-          method: "POST",
-          body: requestBody,
-        })
-          .then((data) => {
-            console.log("Server response:", data);
-            if (!data || data.status !== "success" || !data.id) {
-              throw new Error(data?.message || "Invalid response from server");
-            }
-            if (localStorage.getItem("cookieConsent") === "accepted") {
-              gtag("event", "reply_added", {
-                event_category: "engagement",
-                event_label: "Reply Added",
-              });
-            }
-            loadComments(currentCommentPage);
-          })
-          .catch((e) => {
-            console.error("Error adding reply:", e);
-            alert("Failed to add reply: " + e.message);
-          })
-          .finally(() => {
-            submitReplyBtn.disabled = false; // Re-enable button
-          });
-      }
+     
+function submitReply() {
+  let username = document.getElementById('replyUsername').value.trim();
+  let reply = document.getElementById('replyText').value.trim();
+  const submitReplyBtn = document.querySelector('#replyPopup button[onclick="submitReply()"]');
+  console.log('submitReply called with currentCommentId:', currentCommentId);
+  if (!username || !reply) {
+    alert('Please enter both a username and a reply.');
+    return;
+  }
+  if (!currentCommentId || currentCommentId === 'null') {
+    console.error('Error: currentCommentId is null or invalid:', currentCommentId);
+    alert('Error: No parent comment selected. Please try again.');
+    return;
+  }
+  submitReplyBtn.disabled = true; // Disable button to prevent multiple clicks
+  closeReplyPopup(); // Close popup immediately
+  const parentId = currentCommentId; // Explicitly assign to avoid scope issues
+  console.log('Preparing request with parentId:', parentId);
+  const requestBody = new URLSearchParams({
+    timestamp: new Date().toISOString(),
+    username: username,
+    comment: reply,
+    parentId: parentId
+  });
+  console.log('Request body:', requestBody.toString());
+  fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
+    method: 'POST',
+    body: requestBody
+  }).then(data => {
+    console.log('Server response:', data);
+    if (!data || data.status !== 'success' || !data.id) {
+      throw new Error(data?.message || 'Invalid response from server');
+    }
+    if (localStorage.getItem('cookieConsent') === 'accepted') {
+      gtag('event', 'reply_added', {
+        'event_category': 'engagement',
+        'event_label': 'Reply Added'
+      });
+    }
+    loadComments(currentCommentPage);
+  }).catch(e => {
+    console.error('Error adding reply:', e.message, e.stack);
+    alert('Failed to add reply: ' + e.message);
+  }).finally(() => {
+    submitReplyBtn.disabled = false; // Re-enable button
+  });
+}
+
+
+
       async function likeComment(commentId, isReply) {
         const userId = generateUserId();
         let likedComments = JSON.parse(localStorage.getItem("likedComments") || "[]");
