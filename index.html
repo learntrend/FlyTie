@@ -1763,7 +1763,6 @@
       function showReplyPopup(commentId) {
         console.log("showReplyPopup called with commentId:", commentId);
         currentCommentId = commentId;
-	console.log('currentCommentId set to:', currentCommentId);
         console.log("currentCommentId set to:", currentCommentId);
         document.getElementById("replyPopup").style.display = "flex";
         document.body.classList.add("no-scroll");
@@ -1824,14 +1823,17 @@ function submitReply() {
     alert('Please enter both a username and a reply.');
     return;
   }
-  if (!currentCommentId || currentCommentId === 'null') {
-    console.error('Error: currentCommentId is null or invalid:', currentCommentId);
+  // Capture currentCommentId immediately to avoid scope issues
+  const parentId = currentCommentId;
+  if (!parentId || parentId === 'null' || parentId === null) {
+    console.error('Error: parentId is null or invalid:', parentId, 'currentCommentId:', currentCommentId);
     alert('Error: No parent comment selected. Please try again.');
     return;
   }
+  console.log('Captured currentCommentId:', currentCommentId); 
+  console.log('Captured parentId:', parentId);
   submitReplyBtn.disabled = true; // Disable button to prevent multiple clicks
   closeReplyPopup(); // Close popup immediately
-  const parentId = currentCommentId; // Explicitly assign to avoid scope issues
   console.log('Preparing request with parentId:', parentId);
   const requestBody = new URLSearchParams({
     timestamp: new Date().toISOString(),
