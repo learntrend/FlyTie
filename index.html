@@ -959,7 +959,7 @@
          const commentsPerPage = 10;
          const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
          const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
-         const COMMENT_URL = "https://script.google.com/macros/s/AKfycbw_F08FP3BGIdL65qQXYN2lnfj0mmUn0WIkaZx0LnhUBv1q18DWD7xqcBayzp1o5YPbXA/exec";
+         const COMMENT_URL = "https://script.google.com/macros/s/AKfycbw8Eg0jOB2T_KBHQfUOWdPqt-2KVJhRznAjV6VEsmNfEX4srIc_EfYfZ7DhD5IA6pP_qA/exec";
 		  function acceptCookies() {
            localStorage.setItem('cookieConsent', 'accepted');
            document.getElementById('cookieConsent').style.display = 'none';
@@ -1444,6 +1444,7 @@ async function removeLikedPhrase(phrase) {
       commentList.innerHTML = '<p>No comments available.</p>';
     } else {
       comments.forEach(c => {
+		console.log('Adding Reply button for comment.id:', comment.id);
         let newComment = document.createElement('div');
         newComment.className = 'comment';
         newComment.dataset.commentId = c.id;
@@ -1733,13 +1734,15 @@ async function removeLikedPhrase(phrase) {
            document.body.classList.remove('no-scroll');
          }
          
-         function showReplyPopup(commentId) {
-           currentCommentId = commentId;
-           document.getElementById('replyPopup').style.display = 'flex';
-           document.body.classList.add('no-scroll');
-           document.getElementById('replyUsername').value = '';
-           document.getElementById('replyText').value = '';
-         }
+function showReplyPopup(commentId) {
+  console.log('showReplyPopup called with commentId:', commentId);
+  currentCommentId = commentId;
+  console.log('currentCommentId set to:', currentCommentId);
+  document.getElementById('replyPopup').style.display = 'flex';
+  document.body.classList.add('no-scroll');
+  document.getElementById('replyUsername').value = '';
+  document.getElementById('replyText').value = '';
+}
          function closeReplyPopup() {
            document.getElementById('replyPopup').style.display = 'none';
            document.body.classList.remove('no-scroll');
@@ -1785,21 +1788,30 @@ function submitReply() {
   let username = document.getElementById('replyUsername').value.trim();
   let reply = document.getElementById('replyText').value.trim();
   const submitReplyBtn = document.querySelector('#replyPopup button[onclick="submitReply()"]');
-  if (!username || !reply || !currentCommentId) {
+  console.log('submitReply called with currentCommentId:', currentCommentId);
+  if (!username || !reply) {
     alert('Please enter both a username and a reply.');
+    return;
+  }
+  if (!currentCommentId) {
+    console.error('Error: currentCommentId is null or undefined');
+    alert('Error: No parent comment selected. Please try again.');
     return;
   }
   submitReplyBtn.disabled = true; // Disable button to prevent multiple clicks
   closeReplyPopup(); // Close popup immediately
+  const requestBody = new URLSearchParams({
+    timestamp: new Date().toISOString(),
+    username: username,
+    comment: reply,
+    parentId: currentCommentId
+  });
+  console.log('Request body:', requestBody.toString());
   fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
     method: 'POST',
-    body: new URLSearchParams({
-      timestamp: new Date().toISOString(),
-      username: username,
-      comment: reply,
-      parentId: currentCommentId
-    })
+    body: requestBody
   }).then(data => {
+    console.log('Server response:', data);
     if (!data || data.status !== 'success' || !data.id) {
       throw new Error(data?.message || 'Invalid response from server');
     }
