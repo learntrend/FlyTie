@@ -12,29 +12,80 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  Logger.log('doPost invoked at ' + new Date().toISOString());
+  Logger.log('Raw event object: ' + JSON.stringify(e, null, 2));
+  Logger.log('Parameters: ' + JSON.stringify(e.parameter, null, 2));
+  Logger.log('postData contents: ' + (e.postData ? e.postData.contents : 'No postData'));
+  Logger.log('postData type: ' + (e.postData ? e.postData.type : 'No postData type'));
   try {
-    var action = e.parameter.action;
-    if (action === "addLike") {
+    var action = e.parameter.action ? e.parameter.action.toLowerCase() : '';
+    Logger.log('Processed action: ' + action);
+    // Extract parentId from e.parameter or parse from postData.contents
+    var parentId = e.parameter.parentId || null;
+    Logger.log('parentId from e.parameter: ' + parentId);
+    if (!parentId && e.postData && e.postData.contents) {
+      try {
+        // Try parsing as URL-encoded form data
+        var formData = {};
+        var pairs = e.postData.contents.split('&');
+        Logger.log('Raw postData pairs: ' + JSON.stringify(pairs));
+        pairs.forEach(pair => {
+          var [key, value] = pair.split('=').map(decodeURIComponent);
+          formData[key] = value;
+        });
+        parentId = formData.parentId || null;
+        Logger.log('parentId from formData parsing: ' + parentId);
+        Logger.log('Parsed formData: ' + JSON.stringify(formData));
+      } catch (parseError) {
+        Logger.log('Error parsing postData as form data: ' + parseError.message);
+        // Fallback: Try parsing as JSON
+        try {
+          var jsonData = JSON.parse(e.postData.contents);
+          parentId = jsonData.parentId || null;
+          Logger.log('parentId from JSON parsing: ' + parentId);
+          Logger.log('Parsed JSON data: ' + JSON.stringify(jsonData));
+        } catch (jsonError) {
+          Logger.log('Error parsing postData as JSON: ' + jsonError.message);
+        }
+      }
+    }
+    Logger.log('Final parentId extracted: ' + parentId);
+    if (action === "addlike") {
       var phrase = e.parameter.phrase;
       if (!phrase) throw new Error('Phrase is required');
+      Logger.log('Processing addlike for phrase: ' + phrase);
       return ContentService.createTextOutput(JSON.stringify(addLike(phrase))).setMimeType(ContentService.MimeType.JSON);
-    } else if (action === "addCommentLike") {
+    } else if (action === "addcommentlike") {
       var commentId = e.parameter.commentId;
       var isReply = e.parameter.isReply === 'true';
       if (!commentId) throw new Error('Comment ID is required');
+      Logger.log('Processing addcommentlike for commentId: ' + commentId + ', isReply: ' + isReply);
       return ContentService.createTextOutput(JSON.stringify(addCommentLike(commentId, isReply))).setMimeType(ContentService.MimeType.JSON);
-    } else if (action === "addComment" || action === "addReply") {
+    } else if (action === "addcomment" || action === "addreply") {
       var timestamp = e.parameter.timestamp || new Date().toISOString();
       var username = e.parameter.username;
       var comment = e.parameter.comment;
-      var parentId = e.parameter.parentId;
       if (!username || !comment) throw new Error('Username and comment are required');
+      if (action === "addreply" && (!parentId || parentId === 'null')) {
+        throw new Error('Valid parentId is required for replies');
+      }
       var params = { timestamp: timestamp, username: username, comment: comment, parentId: parentId };
+      Logger.log('doPost params for addComment: ' + JSON.stringify(params));
       return ContentService.createTextOutput(JSON.stringify(addComment(params))).setMimeType(ContentService.MimeType.JSON);
+    } else if (action === "saveemail") {
+      Logger.log('Processing saveemail action');
+      var userId = e.parameter.userId;
+      var email = e.parameter.email || '';
+      var time = e.parameter.time || '';
+      var enabled = e.parameter.enabled === 'true';
+      if (!userId || (enabled && !email)) throw new Error('User ID and email (if enabled) are required');
+      return ContentService.createTextOutput(JSON.stringify(saveEmailSubscription(userId, email, time, enabled))).setMimeType(ContentService.MimeType.JSON);
     } else {
+      Logger.log('Invalid action received: ' + action);
       return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Invalid action' })).setMimeType(ContentService.MimeType.JSON);
     }
   } catch (e) {
+    Logger.log('Error in doPost: ' + e.message + ', Stack: ' + e.stack);
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Server error: ' + e.message })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -50,7 +101,6 @@ function getComments() {
     var data = sheet.getDataRange().getValues();
     var replyData = replySheet.getDataRange().getValues();
     var comments = [];
-
     for (var i = 1; i < data.length; i++) {
       if (data[i][0] && data[i][1] && data[i][2]) {
         var commentId = 'C' + (i + 1);
@@ -124,6 +174,7 @@ function addLike(phrase) {
 }
 
 function addComment(params) {
+  Logger.log('addComment invoked with params: ' + JSON.stringify(params));
   try {
     var ss = SpreadsheetApp.openById('1ApuOtJ8e_3ID_DwcGU6QGuye8HCr3yCM1zZTXp27n-M');
     var sheet = params.parentId ? ss.getSheetByName('CommentReply') : ss.getSheetByName('Comments');
@@ -138,8 +189,10 @@ function addComment(params) {
       id = 'C' + sheet.getLastRow();
     }
     SpreadsheetApp.flush();
+    Logger.log('addComment successful, id: ' + id);
     return { status: 'success', id: id };
   } catch (e) {
+    Logger.log('Error in addComment: ' + e.message + ', Stack: ' + e.stack);
     return { status: 'error', message: 'Error adding comment: ' + e.message };
   }
 }
@@ -160,5 +213,37 @@ function addCommentLike(commentId, isReply) {
     return { status: 'error', message: 'Comment not found' };
   } catch (e) {
     return { status: 'error', message: 'Error adding comment like: ' + e.message };
+  }
+}
+
+function saveEmailSubscription(userId, email, time, enabled) {
+  Logger.log('saveEmailSubscription called with userId: ' + userId + ', email: ' + email + ', time: ' + time + ', enabled: ' + enabled);
+  try {
+    var ss = SpreadsheetApp.openById('1ApuOtJ8e_3ID_DwcGU6QGuye8HCr3yCM1zZTXp27n-M');
+    var sheet = ss.getSheetByName('EmailSubscriptions');
+    if (!sheet) {
+      sheet = ss.insertSheet('EmailSubscriptions');
+      sheet.getRange(1, 1, 1, 4).setValues([['UserId', 'Email', 'Time', 'Enabled']]);
+      Logger.log('EmailSubscriptions sheet created.');
+    }
+    var data = sheet.getDataRange().getValues();
+    var found = false;
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][0] === userId) {
+        sheet.getRange(i + 1, 2, 1, 3).setValues([[email, time, enabled]]);
+        found = true;
+        Logger.log('Updated existing entry for userId: ' + userId);
+        break;
+      }
+    }
+    if (!found) {
+      sheet.appendRow([userId, email, time, enabled]);
+      Logger.log('Appended new entry for userId: ' + userId);
+    }
+    SpreadsheetApp.flush();
+    return { status: 'success', userId: userId, email: email, time: time, enabled: enabled };
+  } catch (e) {
+    Logger.log('Error in saveEmailSubscription: ' + e.message);
+    return { status: 'error', message: 'Error saving email subscription: ' + e.message };
   }
 }
