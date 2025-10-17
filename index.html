@@ -1595,7 +1595,7 @@
       let currentOptions = []; // Store current quiz options order
       function updateQuiz() {
         if (quizzes.length === 0 || phrases.length === 0) {
-          document.getElementById("quizTitle").textContent = "No quizzes available.";
+          document.getElementById("quizTitle").textContent = "Loading today's Quiz..";
           return;
         }
         let p = phrases[currentIndex];
