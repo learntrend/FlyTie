@@ -993,29 +993,29 @@
           analytics_storage: "granted",
         });
       }
-      async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
-        for (let i = 0; i < retries; i++) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-            const contentType = res.headers.get("content-type") || "";
-            if (contentType.includes("application/json")) {
-              return await res.json();
-            } else if (contentType.includes("text/csv") || contentType.includes("text/plain")) {
-              return await res.text();
-            } else {
-              throw new Error("Unexpected content type: " + contentType);
-            }
-          } catch (e) {
-            if (i === retries - 1) throw e;
-            console.warn(`Fetch attempt ${i + 1} failed for ${url}: ${e.message}. Retrying...`);
-            await new Promise((resolve) => setTimeout(resolve, delay));
-          }
-        }
-      }
+async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
+for (let i = 0; i < retries; i++) {
+try {
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 10000);
+const res = await fetch(url, { ...options, signal: controller.signal });
+clearTimeout(timeoutId);
+if (!res.ok) throw new Error(HTTP error! Status: ${res.status});
+const contentType = res.headers.get('content-type') || '';
+if (contentType.includes('application/json')) {
+return await res.json();
+} else if (contentType.includes('text/csv') || contentType.includes('text/plain')) {
+return await res.text();
+} else {
+throw new Error('Unexpected content type: ' + contentType);
+}
+} catch (e) {
+if (i === retries - 1) throw e;
+console.warn(Fetch attempt ${i + 1} failed for ${url}: ${e.message}. Retrying...);
+await new Promise(resolve => setTimeout(resolve, delay));
+}
+}
+}
       function updateStreak() {
         const today = new Date().toDateString();
         const lastVisit = localStorage.getItem("lastVisit");
@@ -1595,7 +1595,7 @@
       let currentOptions = []; // Store current quiz options order
       function updateQuiz() {
         if (quizzes.length === 0 || phrases.length === 0) {
-          document.getElementById("quizTitle").textContent = "Loading today's Quiz..";
+          document.getElementById("quizTitle").textContent = "No quizzes available.";
           return;
         }
         let p = phrases[currentIndex];
