@@ -1644,52 +1644,57 @@
     quizStartTime = new Date();
   }
 
-  function checkAnswer(selected, correct) {
-    const isCorrect = selected === correct;
-    const timeTaken = ((new Date() - quizStartTime) / 1000).toFixed(1);
-    const popup = document.getElementById("popup");
-    const popupMessage = document.getElementById("popupMessage");
-    const quizBanner = document.getElementById("quizBanner");
-    const shareBtn = document.getElementById("shareBtn");
-    const progressBar = document.getElementById("progressBar");
-    const progressFill = document.getElementById("progressFill");
-    const popupButtonRow = document.getElementById("popupButtonRow");
-    const shareText = document.querySelector(".share-text");
-    quizBanner.textContent = isCorrect ? "Correct!" : "Incorrect!";
-    popupMessage.innerHTML = isCorrect
-      ? `Wohoo 🎉<br> You answered in ${timeTaken} seconds!!`
-      : `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
-    popup.classList.toggle("correct-answer", isCorrect);
-    shareBtn.style.display = isCorrect ? "inline-block" : "none";
-    shareText.style.display = isCorrect ? "block" : "none";
-    shareText.innerHTML = isCorrect ? 'Share with your friends <i class="fa-solid fa-arrow-up-from-bracket"></i>' : "";
-    popupButtonRow.style.display = isCorrect ? "flex" : "none";
-    popup.style.display = "flex";
-    document.body.classList.add("no-scroll");
-    if (isCorrect) {
-      progressBar.style.display = "none";
+
+function checkAnswer(selected, correct) {
+  const isCorrect = selected === correct;
+  const timeTaken = ((new Date() - quizStartTime) / 1000).toFixed(1);
+  const popup = document.getElementById("popup");
+  const popupMessage = document.getElementById("popupMessage");
+  const quizBanner = document.getElementById("quizBanner");
+  const shareBtn = document.getElementById("shareBtn");
+  const progressBar = document.getElementById("progressBar");
+  const progressFill = document.getElementById("progressFill");
+  const popupButtonRow = document.getElementById("popupButtonRow");
+  const shareText = document.querySelector(".share-text");
+  const modalContent = document.querySelector(".modal-content");
+  quizBanner.textContent = isCorrect ? "Correct!" : "Incorrect!";
+  popupMessage.innerHTML = isCorrect
+    ? `Wohoo 🎉<br> You answered in ${timeTaken} seconds!!`
+    : `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
+  popup.classList.toggle("correct-answer", isCorrect);
+  shareBtn.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket"></i>';
+  shareBtn.style.display = isCorrect ? "inline-block" : "none";
+  shareText.innerHTML = isCorrect ? 'Share with your friends <i class="fa-solid fa-share"></i>' : "";
+  shareText.style.display = isCorrect ? "block" : "none";
+  popupButtonRow.style.display = isCorrect ? "flex" : "none";
+  modalContent.style.minHeight = isCorrect ? "200px" : "160px";
+  popup.style.display = "flex";
+  document.body.classList.add("no-scroll");
+  if (isCorrect) {
+    progressBar.style.display = "none";
+    progressFill.style.width = "0%";
+    updateStreak();
+  } else {
+    progressBar.style.display = "block";
+    progressFill.style.width = "100%";
+    setTimeout(() => {
       progressFill.style.width = "0%";
-      updateStreak();
-    } else {
-      progressBar.style.display = "block";
-      progressFill.style.width = "100%";
-      setTimeout(() => {
-        progressFill.style.width = "0%";
-      }, 100);
-      setTimeout(() => {
-        closePopup();
-      }, 5100); // Wait for 5s transition + 100ms buffer
-    }
-    if (localStorage.getItem("cookieConsent") === "accepted") {
-      gtag("event", "quiz_answer", {
-        question: quizzes[currentIndex].question,
-        correct: isCorrect,
-        time_taken: timeTaken,
-        event_category: "engagement",
-        event_label: isCorrect ? "Quiz Correct" : "Quiz Incorrect",
-      });
-    }
+    }, 100);
+    setTimeout(() => {
+      closePopup();
+    }, 5100); // Wait for 5s transition + 100ms buffer
   }
+  if (localStorage.getItem("cookieConsent") === "accepted") {
+    gtag("event", "quiz_answer", {
+      question: quizzes[currentIndex].question,
+      correct: isCorrect,
+      time_taken: timeTaken,
+      event_category: "engagement",
+      event_label: isCorrect ? "Quiz Correct" : "Quiz Incorrect",
+    });
+  }
+}
+
 
   function closePopup() {
     document.getElementById("popup").style.display = "none";
