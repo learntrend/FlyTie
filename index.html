@@ -1300,7 +1300,7 @@
     const bookmarkMessage = document.getElementById("bookmarkMessage");
     const bookmarkNav = document.getElementById("bookmarkNav");
     if (bookmarkedPhrase) {
-      bookmarkMessage.textContent = `${bookmarkedPhrase}`;
+      bookmarkMessage.textContent = `Your bookmarked phrase: ${bookmarkedPhrase}`;
       bookmarkNav.style.display = "flex";
     } else {
       bookmarkMessage.textContent = "You haven't bookmarked any phrase yet.";
@@ -1646,19 +1646,22 @@
 
   function checkAnswer(selected, correct) {
     const isCorrect = selected === correct;
+    const timeTaken = ((new Date() - quizStartTime) / 1000).toFixed(1);
     const popup = document.getElementById("popup");
     const popupMessage = document.getElementById("popupMessage");
     const quizBanner = document.getElementById("quizBanner");
     const shareBtn = document.getElementById("shareBtn");
     const progressBar = document.getElementById("progressBar");
     const progressFill = document.getElementById("progressFill");
+    const popupButtonRow = document.getElementById("popupButtonRow");
     quizBanner.textContent = isCorrect ? "Correct!" : "Incorrect!";
-    popupMessage.textContent = isCorrect
-      ? "Wohoo 🎉<br>You answered in ${timeTaken} seconds!!"
+    popupMessage.innerHTML = isCorrect
+      ? `Wohoo 🎉<br> You answered in ${timeTaken} seconds!!`
       : `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
     popup.classList.toggle("correct-answer", isCorrect);
     shareBtn.style.display = isCorrect ? "inline-block" : "none";
     document.querySelector(".share-text").style.display = isCorrect ? "block" : "none";
+    popupButtonRow.style.display = isCorrect ? "flex" : "none";
     popup.style.display = "flex";
     document.body.classList.add("no-scroll");
     progressBar.style.display = "block";
@@ -1673,7 +1676,6 @@
       }, 5000);
     }, 100);
     if (localStorage.getItem("cookieConsent") === "accepted") {
-      const timeTaken = (new Date() - quizStartTime) / 1000;
       gtag("event", "quiz_answer", {
         question: quizzes[currentIndex].question,
         correct: isCorrect,
