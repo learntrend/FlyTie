@@ -961,1027 +961,950 @@
         </div>
       </div>
     </div>
-    <script>
-      let quizStartTime = null;
-      let phrases = [];
-      let quizzes = [];
-      let currentIndex = 0;
-      let currentCommentId = null;
-      let currentCommentPage = 0;
-      const commentsPerPage = 10;
-      const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
-      const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
-      const COMMENT_URL = "https://script.google.com/macros/s/AKfycbxmE2Mlu2poZRlAjIaVfjkYmofBXpzFtxCt8kbzvFR_7gRvG8wXsWQ6kv-1dLUYUg6HIA/exec";
-		function acceptCookies() {
-        localStorage.setItem("cookieConsent", "accepted");
-        document.getElementById("cookieConsent").style.display = "none";
-        gtag("consent", "update", {
-          analytics_storage: "granted",
-        });
-      }
-      function declineCookies() {
-        localStorage.setItem("cookieConsent", "denied");
-        document.getElementById("cookieConsent").style.display = "none";
-        gtag("consent", "update", {
-          analytics_storage: "denied",
-        });
-      }
-      if (!localStorage.getItem("cookieConsent")) {
-        document.getElementById("cookieConsent").style.display = "block";
-      } else if (localStorage.getItem("cookieConsent") === "accepted") {
-        gtag("consent", "update", {
-          analytics_storage: "granted",
-        });
-      }
-      async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
-        for (let i = 0; i < retries; i++) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(url, { ...options, signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-            const contentType = res.headers.get("content-type") || "";
-            if (contentType.includes("application/json")) {
-              return await res.json();
-            } else if (contentType.includes("text/csv") || contentType.includes("text/plain")) {
-              return await res.text();
-            } else {
-              throw new Error("Unexpected content type: " + contentType);
-            }
-          } catch (e) {
-            if (i === retries - 1) throw e;
-            console.warn(`Fetch attempt ${i + 1} failed for ${url}: ${e.message}. Retrying...`);
-            await new Promise((resolve) => setTimeout(resolve, delay));
-          }
-        }
-      }
-      function updateStreak() {
-        const today = new Date().toDateString();
-        const lastVisit = localStorage.getItem("lastVisit");
-        let streak = parseInt(localStorage.getItem("streak")) || 0;
-        if (!lastVisit) {
-          streak = 1;
+<script>
+  let quizStartTime = null;
+  let phrases = [];
+  let quizzes = [];
+  let currentIndex = 0;
+  let currentCommentId = null;
+  let currentCommentPage = 0;
+  const commentsPerPage = 10;
+  const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
+  const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
+  const COMMENT_URL = "https://script.google.com/macros/s/AKfycbyCXstLVsrwJyWjDRCYUtaTr1kwPjejBm8-V8WO6mTR5wt0T1n-bDJtlFfyJx-jflFWMw/exec";
+
+  function acceptCookies() {
+    localStorage.setItem("cookieConsent", "accepted");
+    document.getElementById("cookieConsent").style.display = "none";
+    gtag("consent", "update", { analytics_storage: "granted" });
+  }
+
+  function declineCookies() {
+    localStorage.setItem("cookieConsent", "denied");
+    document.getElementById("cookieConsent").style.display = "none";
+    gtag("consent", "update", { analytics_storage: "denied" });
+  }
+
+  if (!localStorage.getItem("cookieConsent")) {
+    document.getElementById("cookieConsent").style.display = "block";
+  } else if (localStorage.getItem("cookieConsent") === "accepted") {
+    gtag("consent", "update", { analytics_storage: "granted" });
+  }
+
+  async function fetchWithRetry(url, options = {}, retries = 3, delay = 3000) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          return await res.json();
+        } else if (contentType.includes("text/csv") || contentType.includes("text/plain")) {
+          return await res.text();
         } else {
-          const lastVisitDate = new Date(lastVisit);
-          const yesterday = new Date();
-          yesterday.setDate(new Date().getDate() - 1);
-          if (lastVisit === today) {
-            streak = streak;
-          } else if (lastVisitDate.toDateString() === yesterday.toDateString()) {
-            streak += 1;
-          } else {
-            streak = 1;
-          }
+          throw new Error("Unexpected content type: " + contentType);
         }
-        localStorage.setItem("streak", streak);
-        localStorage.setItem("lastVisit", today);
-        return streak;
+      } catch (e) {
+        if (i === retries - 1) throw e;
+        console.warn(`Fetch attempt ${i + 1} failed for ${url}: ${e.message}. Retrying...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
-      function toggleDropdown() {
-        const dropdownMenu = document.getElementById("dropdownMenu");
-        const isOpen = dropdownMenu.style.display === "block";
-        dropdownMenu.style.display = isOpen ? "none" : "block";
-        if (!isOpen) {
-          document.addEventListener("click", closeDropdownOnOutsideClick);
-        } else {
-          document.removeEventListener("click", closeDropdownOnOutsideClick);
-        }
+    }
+  }
+
+  async function fetchUserLikes(userId) {
+    try {
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=getUserLikes&userId=${encodeURIComponent(userId)}`);
+      if (response.status === "success") {
+        return response.likes || [];
+      } else {
+        console.error("Error fetching user likes:", response.message);
+        return [];
       }
-      function closeDropdownOnOutsideClick(event) {
-        const dropdownMenu = document.getElementById("dropdownMenu");
-        const dropdownBtn = document.getElementById("dropdownBtn");
-        if (!dropdownMenu.contains(event.target) && !dropdownBtn.contains(event.target)) {
-          dropdownMenu.style.display = "none";
-          document.removeEventListener("click", closeDropdownOnOutsideClick);
-        }
+    } catch (e) {
+      console.error("Error fetching user likes:", e);
+      return [];
+    }
+  }
+
+  function updateStreak() {
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem("lastVisit");
+    let streak = parseInt(localStorage.getItem("streak")) || 0;
+    if (!lastVisit) {
+      streak = 1;
+    } else {
+      const lastVisitDate = new Date(lastVisit);
+      const yesterday = new Date();
+      yesterday.setDate(new Date().getDate() - 1);
+      if (lastVisit === today) {
+        streak = streak;
+      } else if (lastVisitDate.toDateString() === yesterday.toDateString()) {
+        streak += 1;
+      } else {
+        streak = 1;
       }
-      function showContactPopup() {
-        toggleDropdown();
-        document.getElementById("contactPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
+    }
+    localStorage.setItem("streak", streak);
+    localStorage.setItem("lastVisit", today);
+    return streak;
+  }
+
+  function toggleDropdown() {
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    const isOpen = dropdownMenu.style.display === "block";
+    dropdownMenu.style.display = isOpen ? "none" : "block";
+    if (!isOpen) {
+      document.addEventListener("click", closeDropdownOnOutsideClick);
+    } else {
+      document.removeEventListener("click", closeDropdownOnOutsideClick);
+    }
+  }
+
+  function closeDropdownOnOutsideClick(event) {
+    const dropdownMenu = document.getElementById("dropdownMenu");
+    const dropdownBtn = document.getElementById("dropdownBtn");
+    if (!dropdownMenu.contains(event.target) && !dropdownBtn.contains(event.target)) {
+      dropdownMenu.style.display = "none";
+      document.removeEventListener("click", closeDropdownOnOutsideClick);
+    }
+  }
+
+  function showContactPopup() {
+    toggleDropdown();
+    document.getElementById("contactPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+  }
+
+  function closeContactPopup() {
+    document.getElementById("contactPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+  }
+
+  function showEmailNotificationPopup() {
+    toggleDropdown();
+    document.getElementById("emailNotificationPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+    const settings = JSON.parse(localStorage.getItem("emailNotificationSettings") || "{}");
+    document.getElementById("enableEmailNotifications").checked = settings.enabled || false;
+    document.getElementById("email").value = settings.email || "";
+    document.getElementById("notificationTime").value = settings.time || "09:00";
+  }
+
+  function closeEmailNotificationPopup() {
+    document.getElementById("emailNotificationPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+  }
+
+  async function saveEmailNotificationSettings() {
+    const enabled = document.getElementById("enableEmailNotifications").checked;
+    const email = document.getElementById("email").value;
+    const time = document.getElementById("notificationTime").value;
+    if (enabled && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+    const settings = { enabled, email, time };
+    localStorage.setItem("emailNotificationSettings", JSON.stringify(settings));
+    const userId = generateUserId();
+    try {
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=saveEmail`, {
+        method: "POST",
+        body: new URLSearchParams({
+          userId,
+          email,
+          time,
+          enabled: enabled.toString(),
+        }),
+      });
+      if (response.status !== "success") {
+        throw new Error(response.message || "Failed to save email settings");
       }
-      function closeContactPopup() {
-        document.getElementById("contactPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
+      if (localStorage.getItem("cookieConsent") === "accepted") {
+        gtag("event", "notification_subscription", {
+          type: "email",
+          event_category: "engagement",
+          event_label: enabled ? "Email Notification Enabled" : "Email Notification Disabled",
+        });
       }
-      function showEmailNotificationPopup() {
-        toggleDropdown();
-        document.getElementById("emailNotificationPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
-        const settings = JSON.parse(localStorage.getItem("emailNotificationSettings") || "{}");
-        document.getElementById("enableEmailNotifications").checked = settings.enabled || false;
-        document.getElementById("email").value = settings.email || "";
-        document.getElementById("notificationTime").value = settings.time || "09:00";
+      alert("Email notifications saved! You'll receive reminders as scheduled.");
+      closeEmailNotificationPopup();
+    } catch (e) {
+      console.error("Error saving notification settings:", e);
+      alert("Failed to save settings: " + e.message);
+    }
+  }
+
+  function generateUserId() {
+    let userId = localStorage.getItem("userId");
+    if (!userId) {
+      userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("userId", userId);
+    }
+    return userId;
+  }
+
+  function showStreakPopup() {
+    toggleDropdown();
+    const streak = parseInt(localStorage.getItem("streak")) || 0;
+    const streakMessage = document.getElementById("streakMessage");
+    const streakConditions = document.querySelector("#streakPopup .streak-conditions");
+    const streakShareBtn = document.getElementById("streakShareBtn");
+    if (streak > 0) {
+      streakMessage.innerHTML = `Your Streak: ${streak} day${streak !== 1 ? "s" : ""}!<br>You earned a badge <i class="fa-solid fa-medal"></i>`;
+      const medalIcon = streakMessage.querySelector("i");
+      medalIcon.classList.remove("medal-bronze", "medal-silver", "medal-gold");
+      if (streak >= 1 && streak <= 7) {
+        medalIcon.classList.add("medal-bronze");
+      } else if (streak >= 8 && streak <= 14) {
+        medalIcon.classList.add("medal-silver");
+      } else if (streak >= 15) {
+        medalIcon.classList.add("medal-gold");
       }
-      function closeEmailNotificationPopup() {
-        document.getElementById("emailNotificationPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
-      }
-      async function saveEmailNotificationSettings() {
-        const enabled = document.getElementById("enableEmailNotifications").checked;
-        const email = document.getElementById("email").value;
-        const time = document.getElementById("notificationTime").value;
-        if (enabled && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-          alert("Please enter a valid email address.");
-          return;
-        }
-        const settings = { enabled, email, time };
-        localStorage.setItem("emailNotificationSettings", JSON.stringify(settings));
-        const userId = generateUserId();
-        try {
-          const response = await fetchWithRetry(`${COMMENT_URL}?action=saveEmail`, {
-            method: "POST",
-            body: new URLSearchParams({
-              userId,
-              email,
-              time,
-              enabled: enabled.toString(),
-            }),
-          });
-          if (response.status !== "success") {
-            throw new Error(response.message || "Failed to save email settings");
-          }
+      streakConditions.style.display = "block";
+      streakShareBtn.style.display = "inline-block";
+    } else {
+      streakMessage.innerHTML = `Your Streak: 0 days 🔥`;
+      streakConditions.style.display = "none";
+      streakShareBtn.style.display = "none";
+    }
+    document.getElementById("streakPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+  }
+
+  function closeStreakPopup() {
+    document.getElementById("streakPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+  }
+
+  function shareStreak() {
+    const streak = parseInt(localStorage.getItem("streak")) || 0;
+    if (navigator.share) {
+      navigator
+        .share({
+          title: "FlyTie - My Streak",
+          text: `I've kept a ${streak} day streak on FlyTie! 🔥`,
+          url: window.location.href,
+        })
+        .then(() => {
           if (localStorage.getItem("cookieConsent") === "accepted") {
-            gtag("event", "notification_subscription", {
-              type: "email",
+            gtag("event", "share_streak", {
+              streak_length: streak,
               event_category: "engagement",
-              event_label: enabled ? "Email Notification Enabled" : "Email Notification Disabled",
+              event_label: "Streak Shared",
             });
           }
-          alert("Email notifications saved! You'll receive reminders as scheduled.");
-          closeEmailNotificationPopup();
-        } catch (e) {
-          console.error("Error saving notification settings:", e);
-          alert("Failed to save settings: " + e.message);
-        }
-      }
-      function generateUserId() {
-        let userId = localStorage.getItem("userId");
-        if (!userId) {
-          userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-          localStorage.setItem("userId", userId);
-        }
-        return userId;
-      }
-      function showStreakPopup() {
-        toggleDropdown();
-        const streak = parseInt(localStorage.getItem("streak")) || 0;
-        const streakMessage = document.getElementById("streakMessage");
-        const streakConditions = document.querySelector("#streakPopup .streak-conditions");
-        const streakShareBtn = document.getElementById("streakShareBtn");
-        if (streak > 0) {
-          streakMessage.innerHTML = `Your Streak: ${streak} day${streak !== 1 ? "s" : ""}!<br>You earned a badge <i class="fa-solid fa-medal"></i>`;
-          const medalIcon = streakMessage.querySelector("i");
-          medalIcon.classList.remove("medal-bronze", "medal-silver", "medal-gold");
-          if (streak >= 1 && streak <= 7) {
-            medalIcon.classList.add("medal-bronze");
-          } else if (streak >= 8 && streak <= 14) {
-            medalIcon.classList.add("medal-silver");
-          } else if (streak >= 15) {
-            medalIcon.classList.add("medal-gold");
+        })
+        .catch((err) => {
+          if (err.name === "AbortError" || err.name === "NotAllowedError" || err.message.toLowerCase().includes("cancel")) {
+            return;
           }
-          streakConditions.style.display = "block";
-          streakShareBtn.style.display = "inline-block";
-        } else {
-          streakMessage.innerHTML = `Your Streak: 0 days 🔥`;
-          streakConditions.style.display = "none";
-          streakShareBtn.style.display = "none";
-        }
-        document.getElementById("streakPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
-      }
-      function closeStreakPopup() {
-        document.getElementById("streakPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
-      }
-      function shareStreak() {
-        const streak = parseInt(localStorage.getItem("streak")) || 0;
-        if (navigator.share) {
-          navigator
-            .share({
-              title: "FlyTie - My Streak",
-              text: `I've kept a ${streak} day streak on FlyTie! 🔥`,
-              url: window.location.href,
-            })
-            .then(() => {
-              if (localStorage.getItem("cookieConsent") === "accepted") {
-                gtag("event", "share_streak", {
-                  streak_length: streak,
-                  event_category: "engagement",
-                  event_label: "Streak Shared",
-                });
-              }
-            })
-            .catch((err) => {
-              if (err.name === "AbortError" || err.name === "NotAllowedError" || err.message.toLowerCase().includes("cancel")) {
-                return;
-              }
-              console.error("Error sharing streak:", err);
-              alert("Error sharing streak: An unexpected error occurred. Please try again.");
-            });
-        } else {
-          alert("Sharing not supported on this browser.");
-        }
-      }
-      function showLikedPhrasesPopup() {
-        toggleDropdown();
-        const likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
-        const likedPhrasesList = document.getElementById("likedPhrasesList");
-        likedPhrasesList.innerHTML = "";
-        if (likedPhrases.length === 0) {
-          likedPhrasesList.innerHTML = "<p>No liked phrases.</p>";
-        } else {
-          likedPhrases.forEach((phrase, index) => {
-            const container = document.createElement("div");
-            container.className = "phrase-container";
+          console.error("Error sharing streak:", err);
+          alert("Error sharing streak: An unexpected error occurred. Please try again.");
+        });
+    } else {
+      alert("Sharing not supported on this browser.");
+    }
+  }
 
-            const btn = document.createElement("button");
-            btn.className = "phrase-btn";
-            btn.textContent = phrase;
-            btn.onclick = () => {
-              const phraseIndex = phrases.findIndex((p) => p.phrase === phrase);
-              if (phraseIndex !== -1) {
-                currentIndex = phraseIndex;
-                closeLikedPhrasesPopup();
-                showSection("phrase");
-                showPhrase();
-              }
-            };
-
-            const removeBtn = document.createElement("button");
-            removeBtn.className = "remove-btn";
-            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-            removeBtn.onclick = () => removeLikedPhrase(phrase);
-
-            container.appendChild(btn);
-            container.appendChild(removeBtn);
-            likedPhrasesList.appendChild(container);
-          });
-        }
-        document.getElementById("likedPhrasesPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
-      }
-      async function removeLikedPhrase(phrase) {
-        let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
-        likedPhrases = likedPhrases.filter((p) => p !== phrase);
-        localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-
-        // Update the UI instantly
-        const likedPhrasesList = document.getElementById("likedPhrasesList");
-        const phraseContainer = Array.from(likedPhrasesList.getElementsByClassName("phrase-container")).find((container) => container.querySelector(".phrase-btn").textContent === phrase);
-        if (phraseContainer) {
-          phraseContainer.remove();
-        }
-        // Show "No liked phrases" if the list is empty
-        if (likedPhrases.length === 0) {
-          likedPhrasesList.innerHTML = "<p>No liked phrases.</p>";
-        }
-
-        // Remove focus from any button
-        document.activeElement.blur();
-
-        // Update the like button in the phrase section if viewing the same phrase
-        const likeBtn = document.getElementById("likeBtn");
-        if (phrases[currentIndex]?.phrase === phrase) {
-          likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-        }
-
-        try {
-          let data = await fetchWithRetry(`${COMMENT_URL}?action=removeLike&phrase=${encodeURIComponent(phrase)}`, {
-            method: "POST",
-          });
-          if (!data || data.status !== "success") {
-            throw new Error(data?.message || "Invalid response from server");
-          }
-          if (localStorage.getItem("cookieConsent") === "accepted") {
-            gtag("event", "phrase_unliked", {
-              phrase: phrase,
-              event_category: "engagement",
-              event_label: "Phrase Unliked",
-            });
-          }
-        } catch (e) {
-          console.error("Error removing like:", e);
-          // Revert local change on error
-          likedPhrases.push(phrase);
-          localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-          // Re-add the phrase to the UI
-          const container = document.createElement("div");
-          container.className = "phrase-container";
-          const btn = document.createElement("button");
-          btn.className = "phrase-btn";
-          btn.textContent = phrase;
-          btn.onclick = () => {
-            const phraseIndex = phrases.findIndex((p) => p.phrase === phrase);
-            if (phraseIndex !== -1) {
-              currentIndex = phraseIndex;
-              closeLikedPhrasesPopup();
-              showSection("phrase");
-              showPhrase();
-            }
-          };
-          const removeBtn = document.createElement("button");
-          removeBtn.className = "remove-btn";
-          removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-          removeBtn.onclick = () => removeLikedPhrase(phrase);
-          container.appendChild(btn);
-          container.appendChild(removeBtn);
-          likedPhrasesList.innerHTML = ""; // Clear "No liked phrases" message
-          likedPhrasesList.appendChild(container);
-          // Update like button on error
-          if (phrases[currentIndex]?.phrase === phrase) {
-            likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-          }
-          alert("Failed to unlike phrase: " + e.message);
-        }
-      }
-      function closeLikedPhrasesPopup() {
-        document.getElementById("likedPhrasesPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
-      }
-      function toggleBookmark() {
-        const bookmarkBtn = document.getElementById("bookmarkBtn");
-        const currentPhrase = phrases[currentIndex]?.phrase;
-        const bookmarkedPhrase = localStorage.getItem("bookmarkedPhrase");
-
-        if (bookmarkedPhrase === currentPhrase) {
-          localStorage.removeItem("bookmarkedPhrase");
-          bookmarkBtn.classList.remove("bookmarked");
-          bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
-        } else {
-          localStorage.setItem("bookmarkedPhrase", currentPhrase);
-          bookmarkBtn.classList.add("bookmarked");
-          bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
-        }
-      }
-      function showBookmarkPopup() {
-        toggleDropdown();
-        const bookmarkedPhrase = localStorage.getItem("bookmarkedPhrase");
-        const bookmarkMessage = document.getElementById("bookmarkMessage");
-        const bookmarkNav = document.getElementById("bookmarkNav");
-
-        if (bookmarkedPhrase && phrases.some((p) => p.phrase === bookmarkedPhrase)) {
-          bookmarkMessage.textContent = `"${bookmarkedPhrase}"`;
-          bookmarkNav.style.display = "flex";
-        } else {
-          bookmarkMessage.textContent = "No phrase bookmarked.";
-          bookmarkNav.style.display = "none";
-        }
-        document.getElementById("bookmarkPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
-      }
-      function updateBookmarkButton() {
-        const bookmarkBtn = document.getElementById("bookmarkBtn");
-        const currentPhrase = phrases[currentIndex]?.phrase;
-        const bookmarkedPhrase = localStorage.getItem("bookmarkedPhrase");
-
-        if (bookmarkedPhrase === currentPhrase) {
-          bookmarkBtn.classList.add("bookmarked");
-          bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
-        } else {
-          bookmarkBtn.classList.remove("bookmarked");
-          bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
-        }
-      }
-      function goToBookmark() {
-        const bookmarkedPhrase = localStorage.getItem("bookmarkedPhrase");
-        if (bookmarkedPhrase) {
-          const phraseIndex = phrases.findIndex((p) => p.phrase === bookmarkedPhrase);
+  async function showLikedPhrasesPopup() {
+    toggleDropdown();
+    const userId = generateUserId();
+    const likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
+    const likedPhrasesList = document.getElementById("likedPhrasesList");
+    likedPhrasesList.innerHTML = "";
+    if (likedPhrases.length === 0) {
+      likedPhrasesList.innerHTML = "<p>No liked phrases.</p>";
+    } else {
+      likedPhrases.forEach((phrase, index) => {
+        const container = document.createElement("div");
+        container.className = "phrase-container";
+        const btn = document.createElement("button");
+        btn.className = "phrase-btn";
+        btn.textContent = phrase;
+        btn.onclick = () => {
+          const phraseIndex = phrases.findIndex((p) => p.phrase === phrase);
           if (phraseIndex !== -1) {
             currentIndex = phraseIndex;
-            closeBookmarkPopup();
+            closeLikedPhrasesPopup();
             showSection("phrase");
             showPhrase();
           }
-        }
-      }
-      function closeBookmarkPopup() {
-        document.getElementById("bookmarkPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
-      }
-      function parseCSVLine(line) {
-        let parts = [];
-        let current = "";
-        let inQuote = false;
-        for (let i = 0; i < line.length; i++) {
-          let char = line[i];
-          if (char === '"') {
-            if (inQuote && line[i + 1] === '"') {
-              current += '"';
-              i++; // Skip the next quote
-            } else {
-              inQuote = !inQuote;
-            }
-          } else if (char === "," && !inQuote) {
-            parts.push(current.trim());
-            current = "";
-          } else {
-            current += char;
-          }
-        }
-        parts.push(current.trim());
-        while (parts.length < 5) {
-          parts.push("");
-        }
-        return parts;
-      }
-      async function loadPhrases() {
-        try {
-          let res = await fetchWithRetry(PHRASES_CSV_URL, { cache: "no-store" });
-          let text = res;
-          let lines = text.split(/\r?\n/);
-          phrases = [];
-          if (lines.length > 1) {
-            for (let i = 1; i < lines.length; i++) {
-              if (lines[i].trim() === "") continue;
-              let parts = parseCSVLine(lines[i]);
-              if (parts.length >= 3) {
-                phrases.push({
-                  phrase: parts[0],
-                  meaning: parts[1],
-                  usage: parts[2],
-                });
-              }
-            }
-          }
-          showPhrase();
-          updateBookmarkButton();
-        } catch (e) {
-          console.error("Error loading phrases:", e);
-          document.getElementById("phraseText").textContent = "Error loading phrases.";
-        }
-      }
-      async function loadQuizzes() {
-        try {
-          let res = await fetchWithRetry(QUIZ_CSV_URL, { cache: "no-store" });
-          let text = res;
-          let lines = text.split(/\r?\n/);
-          quizzes = [];
-          const maxRows = 50;
-          if (lines.length > 1) {
-            for (let i = 1; i < lines.length && i <= maxRows; i++) {
-              if (lines[i].trim() === "") continue;
-              let parts = parseCSVLine(lines[i]);
-              if (parts.length >= 5 && parts[0] && parts[1] && parts[2] && parts[3] && parts[4]) {
-                quizzes.push({
-                  question: parts[0],
-                  option1: parts[1],
-                  option2: parts[2],
-                  option3: parts[3],
-                  answer: parts[4],
-                });
-              }
-            }
-          }
-          updateQuiz();
-        } catch (e) {
-          console.error("Error loading quizzes:", e);
-          document.getElementById("quizTitle").textContent = "Unable to load quiz. Please try again later.";
-        }
-      }
-      async function loadComments(page = 0) {
-        try {
-          console.log("Fetching comments from:", `${COMMENT_URL}?action=getComments`);
-          let response = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
-          console.log("Raw server response:", response);
-          if (!response || !response.status || response.status !== "success" || !Array.isArray(response.comments)) {
-            throw new Error(response?.message || "Invalid comment data");
-          }
-          let commentList = document.getElementById("commentList");
-          commentList.innerHTML = "";
-          let start = page * commentsPerPage;
-          let end = start + commentsPerPage;
-          let comments = response.comments.slice(start, end);
-          const userId = generateUserId();
-          const likedComments = JSON.parse(localStorage.getItem("likedComments") || "[]");
-          if (comments.length === 0 && page === 0) {
-            commentList.innerHTML = "<p>No comments available.</p>";
-          } else {
-            comments.forEach((c) => {
-              console.log("Processing comment:", c);
-              if (!c.id) {
-                console.warn("Comment missing id:", c);
-                return;
-              }
-              let newComment = document.createElement("div");
-              newComment.className = "comment";
-              newComment.dataset.commentId = c.id;
-              const isCommentLiked = likedComments.includes(c.id);
-              let commentHTML = `
-          <strong>${c.username || "Anonymous"}:</strong> ${c.comment || ""}
-          <div class="comment-actions">
-            <button onclick="showReplyPopup('${c.id}')" aria-label="Reply to this comment"><i class="fas fa-reply"></i> Reply</button>
-            <button onclick="likeComment('${c.id}', false)" aria-label="Like this comment" ${isCommentLiked ? "disabled" : ""}><i class="${isCommentLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"}"></i> Like (<span class="like-count">${
-                c.likes || 0
-              }</span>)</button>
-          </div>
-        `;
-              if (c.replies && Array.isArray(c.replies)) {
-                c.replies.forEach((r) => {
-                  const isReplyLiked = likedComments.includes(r.id);
-                  commentHTML += `
-              <div class="reply" data-comment-id="${r.id}">
-                ${r.username ? `<strong>${r.username}:</strong> ` : ""}${r.reply || ""}
-                <div class="comment-actions">
-                  <button onclick="likeComment('${r.id}', true)" aria-label="Like this reply" ${isReplyLiked ? "disabled" : ""}><i class="${isReplyLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"}"></i> Like (<span class="like-count">${
-                    r.likes || 0
-                  }</span>)</button>
-                </div>
-              </div>
-            `;
-                });
-              }
-              newComment.innerHTML = commentHTML;
-              commentList.appendChild(newComment);
-            });
-          }
-          document.getElementById("commentCount").textContent = response.comments.length || 0;
-          document.getElementById("prevComments").disabled = page === 0;
-          document.getElementById("nextComments").disabled = end >= (response.comments.length || 0);
-        } catch (e) {
-          console.error("Error loading comments:", e.message, e.stack);
-          console.log("Error details:", {
-            name: e.name,
-            message: e.message,
-            stack: e.stack,
-          });
-          document.getElementById("commentList").innerHTML = "<p>Comments unavailable. Please try again later.</p>";
-          document.getElementById("commentCount").textContent = "0";
-          document.getElementById("prevComments").disabled = true;
-          document.getElementById("nextComments").disabled = true;
-          if (e.name !== "AbortError") {
-            console.warn("Retrying comment load in 5 seconds...");
-            setTimeout(() => loadComments(page), 5000);
-          }
-        }
-      }
-      function prevCommentsPage() {
-        if (currentCommentPage > 0) {
-          currentCommentPage--;
-          loadComments(currentCommentPage);
-        }
-      }
-      function nextCommentsPage() {
-        currentCommentPage++;
-        loadComments(currentCommentPage);
-      }
-      function showPhrase() {
-        if (phrases.length > 0) {
-          let p = phrases[currentIndex];
-          document.getElementById("phraseText").textContent = `"${p.phrase}"`;
-          document.getElementById("meaningText").textContent = p.meaning;
-          document.getElementById("usageText").textContent = p.usage;
-          const likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
-          const isLiked = likedPhrases.includes(p.phrase);
-          document.getElementById("likeBtn").innerHTML = `<i class="${isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"}"></i>`;
-          document.getElementById("phraseHeader").style.display = currentIndex === 0 ? "block" : "none";
-          updateBookmarkButton();
-          // Disable navigation buttons based on current index
-          document.getElementById("prevPhraseBtn").disabled = currentIndex === 0;
-          document.getElementById("nextPhraseBtn").disabled = currentIndex === phrases.length - 1;
-        }
-      }
-      function prevPhrase() {
-        if (currentIndex > 0) {
-          currentIndex--;
-          showPhrase();
-          updateQuiz();
-        }
-      }
-      function nextPhrase() {
-        if (currentIndex < phrases.length - 1) {
-          currentIndex++;
-          showPhrase();
-          updateQuiz();
-        }
-      }
-      function showSection(section) {
-        // Only allow section change if no modal is open
-        if (document.querySelector('.modal[style*="display: flex"]')) return;
-        document.getElementById("phraseSection").style.display = section === "phrase" ? "block" : "none";
-        document.getElementById("quizSection").style.display = section === "quiz" ? "block" : "none";
-        if (section === "quiz") {
-          quizStartTime = new Date();
-          if (!quizzes.length) {
-            loadQuizzes();
-          } else {
-            updateQuiz();
-          }
-        }
-        document.getElementById("logoBtn").disabled = section === "phrase";
-        document.getElementById("logoBtn").classList.toggle("active", section === "phrase");
-        document.getElementById("quizBtn").disabled = section === "quiz";
-        document.getElementById("quizBtn").classList.toggle("active", section === "quiz");
-        document.getElementById("infoBtn").disabled = false;
-        document.getElementById("infoBtn").classList.remove("active");
-      }
-      function showInfo() {
-        document.getElementById("infoPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
-        document.getElementById("infoBtn").disabled = true;
-        document.getElementById("infoBtn").classList.add("active");
-      }
-      function closeInfoPopup() {
-        document.getElementById("infoPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
-        document.getElementById("infoBtn").disabled = false;
-        // Only remove active class if not in phrase or quiz section
-        if (document.getElementById("phraseSection").style.display === "block" || document.getElementById("quizSection").style.display === "block") {
-          document.getElementById("infoBtn").classList.remove("active");
-        }
-      }
-      let lastQuizIndex = -1;
-      let currentOptions = []; // Store current quiz options order
-      function updateQuiz() {
-        if (quizzes.length === 0 || phrases.length === 0) {
-          document.getElementById("quizTitle").textContent = "Loading today's Quiz..";
-          return;
-        }
-        let p = phrases[currentIndex];
-        let quizIndex = lastQuizIndex;
-        if (quizIndex === -1 || !quizzes[quizIndex]?.question.toLowerCase().includes(p.phrase.toLowerCase())) {
-          quizIndex = quizzes.findIndex((q) => q.question.toLowerCase().includes(p.phrase.toLowerCase()));
-          if (quizIndex === -1) {
-            quizIndex = Math.floor(Math.random() * quizzes.length);
-          }
-          lastQuizIndex = quizIndex;
-          // Shuffle options only when selecting a new quiz
-          let quiz = quizzes[quizIndex];
-          currentOptions = [quiz.option1, quiz.option2, quiz.option3];
-          currentOptions = currentOptions.sort(() => Math.random() - 0.5);
-        }
-        let quiz = quizzes[quizIndex];
-        if (!quiz || !quiz.question || !quiz.option1 || !quiz.option2 || !quiz.option3 || !quiz.answer) {
-          document.getElementById("quizTitle").textContent = "Invalid quiz data.";
-          localStorage.removeItem("cachedQuizzes");
-          localStorage.removeItem("quizCacheTime");
-          loadQuizzes();
-          return;
-        }
-        document.getElementById("quizTitle").innerText = quiz.question;
-        let quizOptions = document.getElementById("quizOptions");
-        const fragment = document.createDocumentFragment();
-        currentOptions.forEach((opt) => {
-          if (!opt) return;
-          let isCorrect = opt === quiz.answer;
-          let btn = document.createElement("button");
-          btn.className = "quiz-option";
-          btn.textContent = opt;
-          btn.onclick = () => checkAnswer(isCorrect);
-          fragment.appendChild(btn);
-        });
-        quizOptions.innerHTML = "";
-        quizOptions.appendChild(fragment);
-      }
-      function checkAnswer(isCorrect) {
-        const popup = document.getElementById("popup");
-        const message = document.getElementById("popupMessage");
-        const quizBanner = document.getElementById("quizBanner");
-        const shareBtn = document.getElementById("shareBtn");
-        const shareText = document.querySelector(".modal-content .share-text");
-        const popupButtonRow = document.getElementById("popupButtonRow");
-        const progressBar = document.getElementById("progressBar");
-        const progressFill = document.getElementById("progressFill");
-        const modalContent = document.querySelector(".modal-content");
-        if (isCorrect) {
-          let endTime = new Date();
-          let timeTaken = quizStartTime ? ((endTime - quizStartTime) / 1000).toFixed(2) : 0;
-          quizBanner.textContent = "Correct Answer";
-          message.innerHTML = `Wohoo 🎉<br>You answered in ${timeTaken} seconds!!`;
-          modalContent.classList.add("correct-answer");
-          shareBtn.dataset.time = timeTaken;
-          popupButtonRow.innerHTML = '<button id="okBtn" onclick="closePopup()">OK</button>';
-          progressBar.style.display = "none";
-          if (localStorage.getItem("cookieConsent") === "accepted") {
-            gtag("event", "quiz_completed", {
-              result: "correct",
-              time_taken: timeTaken,
-              event_category: "engagement",
-              event_label: "Quiz Correct",
-            });
-          }
-        } else {
-          quizBanner.textContent = "Wrong Answer";
-          message.innerHTML = `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
-          modalContent.classList.remove("correct-answer");
-          shareBtn.style.display = "none";
-          shareText.style.display = "none";
-          popupButtonRow.innerHTML = ""; // Remove OK button for wrong answer
-          progressBar.style.display = "block";
-          progressFill.style.width = "0";
-          setTimeout(() => (progressFill.style.width = "100%"), 10);
-          setTimeout(() => {
-            progressBar.style.display = "none";
-            closePopup();
-          }, 5000);
-        }
-        popup.style.display = "flex";
-        document.body.classList.add("no-scroll");
-      }
-      function closePopup() {
-        document.getElementById("popup").style.display = "none";
-        document.getElementById("progressBar").style.display = "none";
-        document.getElementById("progressFill").style.width = "0";
-        document.querySelector(".modal-content").classList.remove("correct-answer");
-        document.body.classList.remove("no-scroll");
-      }
-      async function toggleLikePhrase() {
-        let phrase = phrases[currentIndex]?.phrase || "";
-        let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
-        const isLiked = likedPhrases.includes(phrase);
-        const likeBtn = document.getElementById("likeBtn");
-
-        if (isLiked) {
-          // Unlike the phrase
-          likedPhrases = likedPhrases.filter((p) => p !== phrase);
-          localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-          likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-          try {
-            let data = await fetchWithRetry(`${COMMENT_URL}?action=removeLike&phrase=${encodeURIComponent(phrase)}`, {
-              method: "POST",
-            });
-            if (!data || data.status !== "success") {
-              throw new Error(data?.message || "Invalid response from server");
-            }
-            if (localStorage.getItem("cookieConsent") === "accepted") {
-              gtag("event", "phrase_unliked", {
-                phrase: phrase,
-                event_category: "engagement",
-                event_label: "Phrase Unliked",
-              });
-            }
-          } catch (e) {
-            console.error("Error removing like:", e);
-            likedPhrases.push(phrase);
-            localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-            likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-            alert("Failed to unlike phrase: " + e.message);
-          }
-        } else {
-          // Like the phrase with animation
-          likeBtn.classList.add("liked-anim"); // Trigger animation
-          setTimeout(() => likeBtn.classList.remove("liked-anim"), 300); // Remove class after animation
-          likedPhrases.push(phrase);
-          localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-          likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-          try {
-            let data = await fetchWithRetry(`${COMMENT_URL}?action=addLike&phrase=${encodeURIComponent(phrase)}`, {
-              method: "POST",
-            });
-            if (!data || data.status !== "success" || typeof data.likes !== "number") {
-              throw new Error(data?.message || "Invalid response from server");
-            }
-            if (localStorage.getItem("cookieConsent") === "accepted") {
-              gtag("event", "phrase_liked", {
-                phrase: phrase,
-                event_category: "engagement",
-                event_label: "Phrase Liked",
-              });
-            }
-          } catch (e) {
-            console.error("Error adding like:", e);
-            likedPhrases = likedPhrases.filter((p) => p !== phrase);
-            localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-            likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-            alert("Failed to like phrase: " + e.message);
-          }
-        }
-      }
-      document.getElementById("likeBtn").onclick = toggleLikePhrase;
-      function showCommentPopup() {
-        document.getElementById("commentPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
-        document.getElementById("username").value = "";
-        document.getElementById("commentText").value = "";
-      }
-      document.getElementById("commentBtn").onclick = showCommentPopup;
-      function closeCommentPopup() {
-        document.getElementById("commentPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
-      }
-
-      function showReplyPopup(commentId) {
-        console.log("showReplyPopup called with commentId:", commentId);
-        currentCommentId = commentId;
-        console.log("currentCommentId set to:", currentCommentId);
-        document.getElementById("replyPopup").style.display = "flex";
-        document.body.classList.add("no-scroll");
-        document.getElementById("replyUsername").value = "";
-        document.getElementById("replyText").value = "";
-      }
-      function closeReplyPopup() {
-        document.getElementById("replyPopup").style.display = "none";
-        document.body.classList.remove("no-scroll");
-        currentCommentId = null;
-      }
-      function submitComment() {
-        let username = document.getElementById("username").value.trim();
-        let comment = document.getElementById("commentText").value.trim();
-        const submitCommentBtn = document.querySelector('#commentPopup button[onclick="submitComment()"]');
-        if (!username || !comment) {
-          alert("Please enter both a username and a comment.");
-          return;
-        }
-        submitCommentBtn.disabled = true; // Disable button to prevent multiple clicks
-        closeCommentPopup(); // Close popup immediately
-        fetchWithRetry(`${COMMENT_URL}?action=addComment`, {
-          method: "POST",
-          body: new URLSearchParams({
-            timestamp: new Date().toISOString(),
-            username: username,
-            comment: comment,
-          }),
-        })
-          .then((data) => {
-            if (!data || data.status !== "success" || !data.id) {
-              throw new Error(data?.message || "Invalid response from server");
-            }
-            if (localStorage.getItem("cookieConsent") === "accepted") {
-              gtag("event", "comment_added", {
-                event_category: "engagement",
-                event_label: "Comment Added",
-              });
-            }
-            loadComments(currentCommentPage);
-          })
-          .catch((e) => {
-            console.error("Error adding comment:", e);
-            alert("Failed to add comment: " + e.message);
-          })
-          .finally(() => {
-            submitCommentBtn.disabled = false; // Re-enable button
-          });
-      }
-
-     
-function submitReply() {
-  let username = document.getElementById('replyUsername').value.trim();
-  let reply = document.getElementById('replyText').value.trim();
-  const submitReplyBtn = document.querySelector('#replyPopup button[onclick="submitReply()"]');
-  console.log('submitReply called with currentCommentId:', currentCommentId);
-  if (!username || !reply) {
-    alert('Please enter both a username and a reply.');
-    return;
-  }
-  // Capture currentCommentId immediately to avoid scope issues
-  const parentId = currentCommentId;
-  if (!parentId || parentId === 'null' || parentId === null) {
-    console.error('Error: parentId is null or invalid:', parentId, 'currentCommentId:', currentCommentId);
-    alert('Error: No parent comment selected. Please try again.');
-    return;
-  }
-  console.log('Captured currentCommentId:', currentCommentId); 
-  console.log('Captured parentId:', parentId);
-  submitReplyBtn.disabled = true; // Disable button to prevent multiple clicks
-  closeReplyPopup(); // Close popup immediately
-  console.log('Preparing request with parentId:', parentId);
-  const requestBody = new URLSearchParams({
-    timestamp: new Date().toISOString(),
-    username: username,
-    comment: reply,
-    parentId: parentId
-  });
-  console.log('Request body:', requestBody.toString());
-  fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
-    method: 'POST',
-    body: requestBody
-  }).then(data => {
-    console.log('Server response:', data);
-    if (!data || data.status !== 'success' || !data.id) {
-      throw new Error(data?.message || 'Invalid response from server');
-    }
-    if (localStorage.getItem('cookieConsent') === 'accepted') {
-      gtag('event', 'reply_added', {
-        'event_category': 'engagement',
-        'event_label': 'Reply Added'
+        };
+        const removeBtn = document.createElement("button");
+        removeBtn.className = "remove-btn";
+        removeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+        removeBtn.onclick = () => removeLikedPhrase(phrase);
+        container.appendChild(btn);
+        container.appendChild(removeBtn);
+        likedPhrasesList.appendChild(container);
       });
     }
-    loadComments(currentCommentPage);
-  }).catch(e => {
-    console.error('Error adding reply:', e.message, e.stack);
-    alert('Failed to add reply: ' + e.message);
-  }).finally(() => {
-    submitReplyBtn.disabled = false; // Re-enable button
-  });
-}
+    document.getElementById("likedPhrasesPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+  }
 
+  async function removeLikedPhrase(phrase) {
+    const userId = generateUserId();
+    let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
+    likedPhrases = likedPhrases.filter((p) => p !== phrase);
+    localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
+    try {
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=removeLike`, {
+        method: "POST",
+        body: new URLSearchParams({
+          phrase: phrase,
+          userId: userId,
+        }),
+      });
+      if (response.status !== "success") {
+        throw new Error(response.message || "Failed to unlike phrase");
+      }
+      if (phrases[currentIndex]?.phrase === phrase) {
+        const likeBtn = document.getElementById("likeBtn");
+        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+        likeBtn.classList.remove("liked-anim");
+      }
+      showLikedPhrasesPopup();
+      updateLikeButton();
+      if (localStorage.getItem("cookieConsent") === "accepted") {
+        gtag("event", "unlike_phrase", {
+          phrase: phrase,
+          event_category: "engagement",
+          event_label: "Phrase Unliked",
+        });
+      }
+    } catch (e) {
+      console.error("Error removing like:", e);
+      alert("Failed to unlike phrase: " + e.message);
+      likedPhrases.push(phrase);
+      localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
+      showLikedPhrasesPopup();
+    }
+  }
 
+  function closeLikedPhrasesPopup() {
+    document.getElementById("likedPhrasesPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+  }
 
-      async function likeComment(commentId, isReply) {
-        const userId = generateUserId();
-        let likedComments = JSON.parse(localStorage.getItem("likedComments") || "[]");
-        if (likedComments.includes(commentId)) {
-          return; // Already liked
+  function showBookmarkPopup() {
+    toggleDropdown();
+    const bookmarkedPhrase = localStorage.getItem("bookmarkedPhrase");
+    const bookmarkMessage = document.getElementById("bookmarkMessage");
+    const bookmarkNav = document.getElementById("bookmarkNav");
+    if (bookmarkedPhrase) {
+      bookmarkMessage.textContent = `Bookmarked: ${bookmarkedPhrase}`;
+      bookmarkNav.style.display = "flex";
+    } else {
+      bookmarkMessage.textContent = "No phrase bookmarked.";
+      bookmarkNav.style.display = "none";
+    }
+    document.getElementById("bookmarkPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+  }
+
+  function closeBookmarkPopup() {
+    document.getElementById("bookmarkPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+  }
+
+  function goToBookmark() {
+    const bookmarkedPhrase = localStorage.getItem("bookmarkedPhrase");
+    if (bookmarkedPhrase) {
+      const phraseIndex = phrases.findIndex((p) => p.phrase === bookmarkedPhrase);
+      if (phraseIndex !== -1) {
+        currentIndex = phraseIndex;
+        showSection("phrase");
+        showPhrase();
+        closeBookmarkPopup();
+      } else {
+        alert("Bookmarked phrase not found in current phrases.");
+      }
+    }
+  }
+
+  async function toggleLikePhrase() {
+    const phrase = phrases[currentIndex]?.phrase;
+    if (!phrase) return;
+    const userId = generateUserId();
+    let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
+    const likeBtn = document.getElementById("likeBtn");
+    const isLiked = likedPhrases.includes(phrase);
+    try {
+      if (isLiked) {
+        const response = await fetchWithRetry(`${COMMENT_URL}?action=removeLike`, {
+          method: "POST",
+          body: new URLSearchParams({
+            phrase: phrase,
+            userId: userId,
+          }),
+        });
+        if (response.status !== "success") {
+          throw new Error(response.message || "Failed to unlike phrase");
         }
-        try {
-          let data = await fetchWithRetry(`${COMMENT_URL}?action=addCommentLike&commentId=${encodeURIComponent(commentId)}&isReply=${isReply}&userId=${userId}`, {
-            method: "POST",
+        likedPhrases = likedPhrases.filter((p) => p !== phrase);
+        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+        likeBtn.classList.remove("liked-anim");
+        if (localStorage.getItem("cookieConsent") === "accepted") {
+          gtag("event", "unlike_phrase", {
+            phrase: phrase,
+            event_category: "engagement",
+            event_label: "Phrase Unliked",
           });
-          if (!data || data.status !== "success" || typeof data.likes !== "number") {
-            throw new Error(data?.message || "Invalid response from server");
-          }
-          likedComments.push(commentId);
-          localStorage.setItem("likedComments", JSON.stringify(likedComments));
-          let commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
-          if (commentElement) {
-            let likeButton = commentElement.querySelector('button[aria-label^="Like this"]');
-            let likeCountElement = commentElement.querySelector(".like-count");
-            if (likeButton && likeCountElement) {
-              likeButton.disabled = true;
-              likeButton.innerHTML = `<i class="fa-solid fa-heart"></i> Like (<span class="like-count">${data.likes}</span>)`;
-            }
-          }
-          if (localStorage.getItem("cookieConsent") === "accepted") {
-            gtag("event", "comment_liked", {
-              is_reply: isReply,
-              event_category: "engagement",
-              event_label: isReply ? "Reply Liked" : "Comment Liked",
-            });
-          }
-        } catch (e) {
-          console.error("Error liking comment:", e);
-          alert("Failed to like comment: " + e.message);
+        }
+      } else {
+        const response = await fetchWithRetry(`${COMMENT_URL}?action=addLike`, {
+          method: "POST",
+          body: new URLSearchParams({
+            phrase: phrase,
+            userId: userId,
+          }),
+        });
+        if (response.status !== "success") {
+          throw new Error(response.message || "Failed to like phrase");
+        }
+        likedPhrases.push(phrase);
+        likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+        likeBtn.classList.add("liked-anim");
+        setTimeout(() => likeBtn.classList.remove("liked-anim"), 300);
+        if (localStorage.getItem("cookieConsent") === "accepted") {
+          gtag("event", "like_phrase", {
+            phrase: phrase,
+            event_category: "engagement",
+            event_label: "Phrase Liked",
+          });
         }
       }
-      function globalShare() {
-        const isPhraseSection = document.getElementById("phraseSection").style.display === "block";
-        const currentPhrase = phrases[currentIndex]?.phrase || "";
-        if (navigator.share) {
-          const shareData = isPhraseSection
-            ? {
-                title: "FlyTie - Phrase of the Day",
-                text: `Did you know what does "${currentPhrase}" mean? Check out FlyTie app to learn more on such professional phrases daily!`,
-                url: window.location.href,
-              }
-            : {
-                title: "FlyTie - Phrase of the Day",
-                text: "Check out FlyTie to learn new professional phrases daily!",
-                url: window.location.href,
-              };
-          navigator
-            .share(shareData)
-            .then(() => {
-              if (localStorage.getItem("cookieConsent") === "accepted") {
-                gtag("event", "global_share", {
-                  event_category: "engagement",
-                  event_label: isPhraseSection ? "Phrase Share" : "Global Share",
-                });
-              }
-              document.activeElement.blur(); // Remove focus to reset Share button state
-            })
-            .catch((err) => {
-              if (err.name === "AbortError" || err.name === "NotAllowedError" || err.message.toLowerCase().includes("cancel")) {
-                document.activeElement.blur(); // Remove focus even if share is canceled
-                return;
-              }
-              console.error("Error sharing:", err);
-              alert("Error sharing: An unexpected error occurred. Please try again.");
-              document.activeElement.blur(); // Remove focus on error
-            });
-        } else {
-          alert("Sharing not supported on this browser.");
-          document.activeElement.blur(); // Remove focus when alert is shown
-        }
+      localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
+      updateLikeButton();
+    } catch (e) {
+      console.error("Error toggling like:", e);
+      alert("Failed to toggle like: " + e.message);
+    }
+  }
+
+  function toggleBookmark() {
+    const phrase = phrases[currentIndex]?.phrase;
+    if (!phrase) return;
+    const bookmarkBtn = document.getElementById("bookmarkBtn");
+    const currentBookmark = localStorage.getItem("bookmarkedPhrase");
+    if (currentBookmark === phrase) {
+      localStorage.removeItem("bookmarkedPhrase");
+      bookmarkBtn.classList.remove("bookmarked");
+      bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
+      if (localStorage.getItem("cookieConsent") === "accepted") {
+        gtag("event", "remove_bookmark", {
+          phrase: phrase,
+          event_category: "engagement",
+          event_label: "Bookmark Removed",
+        });
       }
-      function shareResult() {
-        if (navigator.share) {
-          let timeTaken = document.getElementById("shareBtn").dataset.time || "0";
-          let timeUnit = parseFloat(timeTaken) >= 60 ? "minutes" : "seconds";
-          if (timeUnit === "minutes") {
-            timeTaken = (parseFloat(timeTaken) / 60).toFixed(2);
-          }
-          navigator
-            .share({
-              title: "FlyTie - Quiz Result",
-              text: `On FlyTie, I got the quiz right in ${timeTaken} ${timeUnit}! Try it yourself!`,
-              url: window.location.href,
-            })
-            .then(() => {
-              if (localStorage.getItem("cookieConsent") === "accepted") {
-                gtag("event", "quiz_result_shared", {
-                  event_category: "engagement",
-                  event_label: "Quiz Result Shared",
-                });
-              }
-            })
-            .catch((err) => {
-              if (err.name === "AbortError" || err.name === "NotAllowedError" || err.message.toLowerCase().includes("cancel")) {
-                return;
-              }
-              console.error("Error sharing quiz result:", err);
-              alert("Error sharing quiz result: An unexpected error occurred. Please try again.");
-            });
-        } else {
-          alert("Sharing not supported on this browser.");
-        }
+    } else {
+      localStorage.setItem("bookmarkedPhrase", phrase);
+      bookmarkBtn.classList.add("bookmarked");
+      bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
+      if (localStorage.getItem("cookieConsent") === "accepted") {
+        gtag("event", "add_bookmark", {
+          phrase: phrase,
+          event_category: "engagement",
+          event_label: "Bookmark Added",
+        });
       }
-      window.onload = () => {
-        updateStreak();
-        loadPhrases();
+    }
+  }
+
+  function showSection(section) {
+    document.getElementById("phraseSection").style.display = section === "phrase" ? "block" : "none";
+    document.getElementById("quizSection").style.display = section === "quiz" ? "block" : "none";
+    document.getElementById("logoBtn").classList.toggle("active", section === "phrase");
+    document.getElementById("quizBtn").classList.toggle("active", section === "quiz");
+    toggleDropdown();
+    if (section === "phrase") {
+      showPhrase();
+    } else if (section === "quiz") {
+      showQuiz();
+    }
+  }
+
+  function showInfo() {
+    toggleDropdown();
+    document.getElementById("infoPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+  }
+
+  function closeInfoPopup() {
+    document.getElementById("infoPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+  }
+
+  async function globalShare() {
+    const section = document.getElementById("phraseSection").style.display === "block" ? "phrase" : "quiz";
+    let title, text;
+    if (section === "phrase") {
+      const phrase = phrases[currentIndex]?.phrase;
+      title = "FlyTie - Phrase of the Day";
+      text = `Check out today's phrase on FlyTie: "${phrase}"!`;
+    } else {
+      title = "FlyTie - Quiz of the Day";
+      text = "Test your knowledge with today's quiz on FlyTie!";
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: text,
+          url: window.location.href,
+        });
+        if (localStorage.getItem("cookieConsent") === "accepted") {
+          gtag("event", "share_content", {
+            content_type: section,
+            event_category: "engagement",
+            event_label: `${section === "phrase" ? "Phrase" : "Quiz"} Shared`,
+          });
+        }
+      } catch (err) {
+        if (err.name === "AbortError" || err.name === "NotAllowedError" || err.message.toLowerCase().includes("cancel")) {
+          return;
+        }
+        console.error("Error sharing:", err);
+        alert("Error sharing: An unexpected error occurred. Please try again.");
+      }
+    } else {
+      alert("Sharing not supported on this browser.");
+    }
+  }
+
+  async function shareResult() {
+    const quiz = quizzes[currentIndex];
+    if (!quiz) return;
+    const title = "FlyTie - Quiz Result";
+    const text = `I got the quiz right on FlyTie! Can you answer this: ${quiz.question}?`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: text,
+          url: window.location.href,
+        });
+        if (localStorage.getItem("cookieConsent") === "accepted") {
+          gtag("event", "share_quiz_result", {
+            quiz_question: quiz.question,
+            event_category: "engagement",
+            event_label: "Quiz Result Shared",
+          });
+        }
+      } catch (err) {
+        if (err.name === "AbortError" || err.name === "NotAllowedError" || err.message.toLowerCase().includes("cancel")) {
+          return;
+        }
+        console.error("Error sharing quiz result:", err);
+        alert("Error sharing quiz result: An unexpected error occurred. Please try again.");
+      }
+    } else {
+      alert("Sharing not supported on this browser.");
+    }
+  }
+
+  function parseCSV(csvText) {
+    const rows = [];
+    let currentRow = [];
+    let currentCell = "";
+    let inQuotes = false;
+    for (let i = 0; i < csvText.length; i++) {
+      const char = csvText[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === "," && !inQuotes) {
+        currentRow.push(currentCell.trim());
+        currentCell = "";
+      } else if (char === "\n" && !inQuotes) {
+        currentRow.push(currentCell.trim());
+        rows.push(currentRow);
+        currentRow = [];
+        currentCell = "";
+      } else {
+        currentCell += char;
+      }
+    }
+    currentRow.push(currentCell.trim());
+    if (currentRow.length > 1 || currentRow[0]) {
+      rows.push(currentRow);
+    }
+    return rows;
+  }
+
+  async function loadPhrases() {
+    try {
+      const csvText = await fetchWithRetry(PHRASES_CSV_URL);
+      const rows = parseCSV(csvText);
+      phrases = rows.slice(1).map((row) => ({
+        phrase: row[0],
+        meaning: row[1],
+        usage: row[2],
+      }));
+      currentIndex = Math.min(currentIndex, phrases.length - 1);
+      showPhrase();
+      const userId = generateUserId();
+      const serverLikes = await fetchUserLikes(userId);
+      let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
+      likedPhrases = [...new Set([...likedPhrases, ...serverLikes])].filter((p) => phrases.some((phrase) => phrase.phrase === p));
+      localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
+      updateLikeButton();
+    } catch (e) {
+      console.error("Error loading phrases:", e);
+      document.getElementById("phraseText").textContent = "Error loading phrase.";
+      document.getElementById("meaningText").textContent = "";
+      document.getElementById("usageText").textContent = "";
+    }
+  }
+
+  async function loadQuizzes() {
+    try {
+      const csvText = await fetchWithRetry(QUIZ_CSV_URL);
+      const rows = parseCSV(csvText);
+      quizzes = rows.slice(1).map((row) => ({
+        question: row[0],
+        options: [row[1], row[2], row[3], row[4]],
+        answer: row[1],
+      }));
+      showQuiz();
+    } catch (e) {
+      console.error("Error loading quizzes:", e);
+      document.getElementById("quizTitle").textContent = "Error loading quiz.";
+      document.getElementById("quizOptions").innerHTML = "";
+    }
+  }
+
+  function showPhrase() {
+    if (phrases.length === 0) return;
+    const phrase = phrases[currentIndex];
+    document.getElementById("phraseHeader").style.display = "block";
+    document.getElementById("phraseText").textContent = phrase.phrase;
+    document.getElementById("meaningText").textContent = phrase.meaning;
+    document.getElementById("usageText").textContent = phrase.usage;
+    document.getElementById("prevPhraseBtn").disabled = currentIndex === 0;
+    document.getElementById("nextPhraseBtn").disabled = currentIndex === phrases.length - 1;
+    updateLikeButton();
+    updateBookmarkButton();
+    loadComments();
+  }
+
+  function updateLikeButton() {
+    const phrase = phrases[currentIndex]?.phrase;
+    const likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
+    const likeBtn = document.getElementById("likeBtn");
+    if (likedPhrases.includes(phrase)) {
+      likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+    } else {
+      likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+    }
+  }
+
+  function updateBookmarkButton() {
+    const phrase = phrases[currentIndex]?.phrase;
+    const bookmarkBtn = document.getElementById("bookmarkBtn");
+    const bookmarkedPhrase = localStorage.getItem("bookmarkedPhrase");
+    if (bookmarkedPhrase === phrase) {
+      bookmarkBtn.classList.add("bookmarked");
+      bookmarkBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i>';
+    } else {
+      bookmarkBtn.classList.remove("bookmarked");
+      bookmarkBtn.innerHTML = '<i class="fa-regular fa-bookmark"></i>';
+    }
+  }
+
+  function prevPhrase() {
+    if (currentIndex > 0) {
+      currentIndex--;
+      showPhrase();
+    }
+  }
+
+  function nextPhrase() {
+    if (currentIndex < phrases.length - 1) {
+      currentIndex++;
+      showPhrase();
+    }
+  }
+
+  function showQuiz() {
+    if (quizzes.length === 0) return;
+    const quiz = quizzes[currentIndex];
+    document.getElementById("quizTitle").textContent = quiz.question;
+    const quizOptions = document.getElementById("quizOptions");
+    quizOptions.innerHTML = "";
+    quiz.options.forEach((option, index) => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-option";
+      btn.textContent = option;
+      btn.onclick = () => checkAnswer(option, quiz.answer);
+      quizOptions.appendChild(btn);
+    });
+    quizStartTime = new Date();
+  }
+
+  function checkAnswer(selected, correct) {
+    const isCorrect = selected === correct;
+    const popup = document.getElementById("popup");
+    const popupMessage = document.getElementById("popupMessage");
+    const quizBanner = document.getElementById("quizBanner");
+    const shareBtn = document.getElementById("shareBtn");
+    const progressBar = document.getElementById("progressBar");
+    const progressFill = document.getElementById("progressFill");
+    const popupButtonRow = document.getElementById("popupButtonRow");
+    quizBanner.textContent = isCorrect ? "Correct!" : "Incorrect!";
+    popupMessage.textContent = isCorrect
+      ? "Great job! You got it right."
+      : `The correct answer was: ${correct}`;
+    popup.classList.toggle("correct-answer", isCorrect);
+    shareBtn.style.display = isCorrect ? "inline-block" : "none";
+    document.querySelector(".share-text").style.display = isCorrect ? "block" : "none";
+    popup.style.display = "flex";
+    document.body.classList.add("no-scroll");
+    progressBar.style.display = "block";
+    progressFill.style.width = "100%";
+    setTimeout(() => {
+      progressFill.style.width = "0%";
+      setTimeout(() => {
+        closePopup();
+        if (isCorrect) {
+          updateStreak();
+        }
+      }, 5000);
+    }, 100);
+    if (localStorage.getItem("cookieConsent") === "accepted") {
+      const timeTaken = (new Date() - quizStartTime) / 1000;
+      gtag("event", "quiz_answer", {
+        question: quizzes[currentIndex].question,
+        correct: isCorrect,
+        time_taken: timeTaken,
+        event_category: "engagement",
+        event_label: isCorrect ? "Quiz Correct" : "Quiz Incorrect",
+      });
+    }
+  }
+
+  function closePopup() {
+    document.getElementById("popup").style.display = "none";
+    document.getElementById("progressBar").style.display = "none";
+    document.getElementById("progressFill").style.width = "0%";
+    document.body.classList.remove("no-scroll");
+  }
+
+  async function loadComments() {
+    try {
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
+      if (response.status === "success") {
+        const comments = response.comments || [];
+        document.getElementById("commentCount").textContent = comments.length;
+        displayComments(comments);
+      } else {
+        console.error("Error fetching comments:", response.message);
+        document.getElementById("commentList").innerHTML = "<p>Error loading comments.</p>";
+      }
+    } catch (e) {
+      console.error("Error loading comments:", e);
+      document.getElementById("commentList").innerHTML = "<p>Error loading comments.</p>";
+    }
+  }
+
+  function displayComments(comments) {
+    const commentList = document.getElementById("commentList");
+    commentList.innerHTML = "";
+    const start = currentCommentPage * commentsPerPage;
+    const end = start + commentsPerPage;
+    const paginatedComments = comments.slice(start, end);
+    if (paginatedComments.length === 0 && currentCommentPage > 0) {
+      currentCommentPage--;
+      displayComments(comments);
+      return;
+    }
+    paginatedComments.forEach((comment) => {
+      const div = document.createElement("div");
+      div.className = "comment";
+      div.innerHTML = `
+        <strong>${comment.username}</strong>
+        <p>${comment.comment}</p>
+        <div class="comment-actions">
+          <button onclick="likeComment('${comment.id}', false)" aria-label="Like this comment">
+            <i class="fa-solid fa-heart"></i> ${comment.likes || 0}
+          </button>
+          <button onclick="showReplyPopup('${comment.id}')" aria-label="Reply to this comment">
+            <i class="fa-solid fa-reply"></i> Reply
+          </button>
+        </div>
+      `;
+      if (comment.replies && comment.replies.length > 0) {
+        comment.replies.forEach((reply) => {
+          const replyDiv = document.createElement("div");
+          replyDiv.className = "reply";
+          replyDiv.innerHTML = `
+            <strong>${reply.reply.split(": ")[0]}</strong>
+            <p>${reply.reply.split(": ").slice(1).join(": ")}</p>
+            <div class="comment-actions">
+              <button onclick="likeComment('${reply.id}', true)" aria-label="Like this reply">
+                <i class="fa-solid fa-heart"></i> ${reply.likes || 0}
+              </button>
+            </div>
+          `;
+          div.appendChild(replyDiv);
+        });
+      }
+      commentList.appendChild(div);
+    });
+    document.getElementById("prevComments").disabled = currentCommentPage === 0;
+    document.getElementById("nextComments").disabled = end >= comments.length;
+  }
+
+  function prevCommentsPage() {
+    if (currentCommentPage > 0) {
+      currentCommentPage--;
+      loadComments();
+    }
+  }
+
+  function nextCommentsPage() {
+    currentCommentPage++;
+    loadComments();
+  }
+
+  async function likeComment(commentId, isReply) {
+    try {
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=addCommentLike&commentId=${commentId}&isReply=${isReply}`, {
+        method: "POST",
+      });
+      if (response.status === "success") {
         loadComments();
-        showSection("phrase"); // Ensure phrase section is shown by default
-      };
-    </script>
+        if (localStorage.getItem("cookieConsent") === "accepted") {
+          gtag("event", "like_comment", {
+            comment_id: commentId,
+            is_reply: isReply,
+            event_category: "engagement",
+            event_label: isReply ? "Reply Liked" : "Comment Liked",
+          });
+        }
+      } else {
+        console.error("Error liking comment:", response.message);
+        alert("Failed to like comment: " + response.message);
+      }
+    } catch (e) {
+      console.error("Error liking comment:", e);
+      alert("Failed to like comment: " + e.message);
+    }
+  }
+
+  function showCommentPopup() {
+    document.getElementById("commentPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+    document.getElementById("username").value = "";
+    document.getElementById("commentText").value = "";
+  }
+
+  function closeCommentPopup() {
+    document.getElementById("commentPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+  }
+
+  function showReplyPopup(commentId) {
+    currentCommentId = commentId;
+    document.getElementById("replyPopup").style.display = "flex";
+    document.body.classList.add("no-scroll");
+    document.getElementById("replyUsername").value = "";
+    document.getElementById("replyText").value = "";
+  }
+
+  function closeReplyPopup() {
+    document.getElementById("replyPopup").style.display = "none";
+    document.body.classList.remove("no-scroll");
+    currentCommentId = null;
+  }
+
+  async function submitComment() {
+    const username = document.getElementById("username").value.trim();
+    const comment = document.getElementById("commentText").value.trim();
+    if (!username || !comment) {
+      alert("Please enter both your name and a comment.");
+      return;
+    }
+    try {
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=addComment`, {
+        method: "POST",
+        body: new URLSearchParams({
+          username,
+          comment,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      if (response.status === "success") {
+        closeCommentPopup();
+        loadComments();
+        if (localStorage.getItem("cookieConsent") === "accepted") {
+          gtag("event", "add_comment", {
+            comment_id: response.id,
+            event_category: "engagement",
+            event_label: "Comment Added",
+          });
+        }
+      } else {
+        console.error("Error submitting comment:", response.message);
+        alert("Failed to submit comment: " + response.message);
+      }
+    } catch (e) {
+      console.error("Error submitting comment:", e);
+      alert("Failed to submit comment: " + e.message);
+    }
+  }
+
+  async function submitReply() {
+    const username = document.getElementById("replyUsername").value.trim();
+    const reply = document.getElementById("replyText").value.trim();
+    if (!username || !reply || !currentCommentId) {
+      alert("Please enter both your name and a reply.");
+      return;
+    }
+    try {
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=addReply`, {
+        method: "POST",
+        body: new URLSearchParams({
+          username,
+          comment: reply,
+          parentId: currentCommentId,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+      if (response.status === "success") {
+        closeReplyPopup();
+        loadComments();
+        if (localStorage.getItem("cookieConsent") === "accepted") {
+          gtag("event", "add_reply", {
+            comment_id: currentCommentId,
+            reply_id: response.id,
+            event_category: "engagement",
+            event_label: "Reply Added",
+          });
+        }
+      } else {
+        console.error("Error submitting reply:", response.message);
+        alert("Failed to submit reply: " + response.message);
+      }
+    } catch (e) {
+      console.error("Error submitting reply:", e);
+      alert("Failed to submit reply: " + e.message);
+    }
+  }
+
+  document.getElementById("commentBtn").onclick = showCommentPopup;
+
+  window.onload = () => {
+    updateStreak();
+    loadPhrases();
+    loadQuizzes();
+    loadComments();
+  };
+</script>
   </body>
 </html>
