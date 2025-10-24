@@ -1654,27 +1654,32 @@
     const progressBar = document.getElementById("progressBar");
     const progressFill = document.getElementById("progressFill");
     const popupButtonRow = document.getElementById("popupButtonRow");
+    const shareText = document.querySelector(".share-text");
     quizBanner.textContent = isCorrect ? "Correct!" : "Incorrect!";
     popupMessage.innerHTML = isCorrect
       ? `Wohoo 🎉<br> You answered in ${timeTaken} seconds!!`
       : `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
     popup.classList.toggle("correct-answer", isCorrect);
     shareBtn.style.display = isCorrect ? "inline-block" : "none";
-    document.querySelector(".share-text").style.display = isCorrect ? "block" : "none";
+    shareText.style.display = isCorrect ? "block" : "none";
+    shareText.innerHTML = isCorrect ? 'Share with your friends <i class="fa-solid fa-share"></i>' : "";
     popupButtonRow.style.display = isCorrect ? "flex" : "none";
     popup.style.display = "flex";
     document.body.classList.add("no-scroll");
-    progressBar.style.display = "block";
-    progressFill.style.width = "100%";
-    setTimeout(() => {
+    if (isCorrect) {
+      progressBar.style.display = "none";
       progressFill.style.width = "0%";
+      updateStreak();
+    } else {
+      progressBar.style.display = "block";
+      progressFill.style.width = "100%";
+      setTimeout(() => {
+        progressFill.style.width = "0%";
+      }, 100);
       setTimeout(() => {
         closePopup();
-        if (isCorrect) {
-          updateStreak();
-        }
-      }, 5000);
-    }, 100);
+      }, 5100); // Wait for 5s transition + 100ms buffer
+    }
     if (localStorage.getItem("cookieConsent") === "accepted") {
       gtag("event", "quiz_answer", {
         question: quizzes[currentIndex].question,
