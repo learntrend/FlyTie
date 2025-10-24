@@ -971,7 +971,7 @@
   const commentsPerPage = 10;
   const PHRASES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?output=csv";
   const QUIZ_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSx3wQD_d33uZsOTPlmRddf01gml1iuRiAMLyvGVk9U-Kv2-F5zIGUuSBuOBgu2O36ntNUD4KlaYhoZ/pub?gid=102179282&single=true&output=csv";
-  const COMMENT_URL = "https://script.google.com/macros/s/AKfycbyCXstLVsrwJyWjDRCYUtaTr1kwPjejBm8-V8WO6mTR5wt0T1n-bDJtlFfyJx-jflFWMw/exec";
+  const COMMENT_URL = "https://script.google.com/macros/s/AKfycbxmE2Mlu2poZRlAjIaVfjkYmofBXpzFtxCt8kbzvFR_7gRvG8wXsWQ6kv-1dLUYUg6HIA/exec";
 
   function acceptCookies() {
     localStorage.setItem("cookieConsent", "accepted");
@@ -1250,8 +1250,15 @@
   async function removeLikedPhrase(phrase) {
     const userId = generateUserId();
     let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
+    const originalLikedPhrases = [...likedPhrases];
     likedPhrases = likedPhrases.filter((p) => p !== phrase);
     localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
+    const likeBtn = document.getElementById("likeBtn");
+    if (phrases[currentIndex]?.phrase === phrase) {
+      likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+      likeBtn.classList.remove("liked-anim");
+    }
+    showLikedPhrasesPopup();
     try {
       const response = await fetchWithRetry(`${COMMENT_URL}?action=removeLike`, {
         method: "POST",
@@ -1263,13 +1270,6 @@
       if (response.status !== "success") {
         throw new Error(response.message || "Failed to unlike phrase");
       }
-      if (phrases[currentIndex]?.phrase === phrase) {
-        const likeBtn = document.getElementById("likeBtn");
-        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-        likeBtn.classList.remove("liked-anim");
-      }
-      showLikedPhrasesPopup();
-      updateLikeButton();
       if (localStorage.getItem("cookieConsent") === "accepted") {
         gtag("event", "unlike_phrase", {
           phrase: phrase,
@@ -1280,8 +1280,11 @@
     } catch (e) {
       console.error("Error removing like:", e);
       alert("Failed to unlike phrase: " + e.message);
-      likedPhrases.push(phrase);
-      localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
+      localStorage.setItem("likedPhrases", JSON.stringify(originalLikedPhrases));
+      if (phrases[currentIndex]?.phrase === phrase) {
+        likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+        likeBtn.classList.add("liked-anim");
+      }
       showLikedPhrasesPopup();
     }
   }
@@ -1297,10 +1300,10 @@
     const bookmarkMessage = document.getElementById("bookmarkMessage");
     const bookmarkNav = document.getElementById("bookmarkNav");
     if (bookmarkedPhrase) {
-      bookmarkMessage.textContent = `Bookmarked: ${bookmarkedPhrase}`;
+      bookmarkMessage.textContent = `Your bookmarked phrase: ${bookmarkedPhrase}`;
       bookmarkNav.style.display = "flex";
     } else {
-      bookmarkMessage.textContent = "No phrase bookmarked.";
+      bookmarkMessage.textContent = "You haven't bookmarked any phrase yet.";
       bookmarkNav.style.display = "none";
     }
     document.getElementById("bookmarkPopup").style.display = "flex";
@@ -1334,57 +1337,53 @@
     let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
     const likeBtn = document.getElementById("likeBtn");
     const isLiked = likedPhrases.includes(phrase);
+    const originalLikedPhrases = [...likedPhrases];
+    if (isLiked) {
+      likedPhrases = likedPhrases.filter((p) => p !== phrase);
+      likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+      likeBtn.classList.remove("liked-anim");
+    } else {
+      likedPhrases.push(phrase);
+      likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+      likeBtn.classList.add("liked-anim");
+      setTimeout(() => likeBtn.classList.remove("liked-anim"), 300);
+    }
+    localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
     try {
+      const action = isLiked ? "removeLike" : "addLike";
+      const response = await fetchWithRetry(`${COMMENT_URL}?action=${action}`, {
+        method: "POST",
+        body: new URLSearchParams({
+          phrase: phrase,
+          userId: userId,
+        }),
+      });
+      if (response.status !== "success") {
+        throw new Error(response.message || `Failed to ${isLiked ? "unlike" : "like"} phrase`);
+      }
+      if (localStorage.getItem("cookieConsent") === "accepted") {
+        gtag("event", isLiked ? "unlike_phrase" : "like_phrase", {
+          phrase: phrase,
+          event_category: "engagement",
+          event_label: isLiked ? "Phrase Unliked" : "Phrase Liked",
+        });
+      }
+    } catch (e) {
+      console.error(`Error ${isLiked ? "unliking" : "liking"} phrase:`, e);
+      alert(`Failed to ${isLiked ? "unlike" : "like"} phrase: ` + e.message);
+      localStorage.setItem("likedPhrases", JSON.stringify(originalLikedPhrases));
       if (isLiked) {
-        const response = await fetchWithRetry(`${COMMENT_URL}?action=removeLike`, {
-          method: "POST",
-          body: new URLSearchParams({
-            phrase: phrase,
-            userId: userId,
-          }),
-        });
-        if (response.status !== "success") {
-          throw new Error(response.message || "Failed to unlike phrase");
-        }
-        likedPhrases = likedPhrases.filter((p) => p !== phrase);
-        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-        likeBtn.classList.remove("liked-anim");
-        if (localStorage.getItem("cookieConsent") === "accepted") {
-          gtag("event", "unlike_phrase", {
-            phrase: phrase,
-            event_category: "engagement",
-            event_label: "Phrase Unliked",
-          });
-        }
-      } else {
-        const response = await fetchWithRetry(`${COMMENT_URL}?action=addLike`, {
-          method: "POST",
-          body: new URLSearchParams({
-            phrase: phrase,
-            userId: userId,
-          }),
-        });
-        if (response.status !== "success") {
-          throw new Error(response.message || "Failed to like phrase");
-        }
         likedPhrases.push(phrase);
         likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
         likeBtn.classList.add("liked-anim");
-        setTimeout(() => likeBtn.classList.remove("liked-anim"), 300);
-        if (localStorage.getItem("cookieConsent") === "accepted") {
-          gtag("event", "like_phrase", {
-            phrase: phrase,
-            event_category: "engagement",
-            event_label: "Phrase Liked",
-          });
-        }
+      } else {
+        likedPhrases = likedPhrases.filter((p) => p !== phrase);
+        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+        likeBtn.classList.remove("liked-anim");
       }
       localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-      updateLikeButton();
-    } catch (e) {
-      console.error("Error toggling like:", e);
-      alert("Failed to toggle like: " + e.message);
     }
+    updateLikeButton();
   }
 
   function toggleBookmark() {
@@ -1540,8 +1539,7 @@
   async function loadPhrases() {
     try {
       const csvText = await fetchWithRetry(PHRASES_CSV_URL);
-      const rows = parseCSV(csvText);
-      phrases = rows.slice(1).map((row) => ({
+      phrases = parseCSV(csvText).slice(1).map((row) => ({
         phrase: row[0],
         meaning: row[1],
         usage: row[2],
@@ -1565,8 +1563,7 @@
   async function loadQuizzes() {
     try {
       const csvText = await fetchWithRetry(QUIZ_CSV_URL);
-      const rows = parseCSV(csvText);
-      quizzes = rows.slice(1).map((row) => ({
+      quizzes = parseCSV(csvText).slice(1).map((row) => ({
         question: row[0],
         options: [row[1], row[2], row[3], row[4]],
         answer: row[1],
@@ -1655,11 +1652,10 @@
     const shareBtn = document.getElementById("shareBtn");
     const progressBar = document.getElementById("progressBar");
     const progressFill = document.getElementById("progressFill");
-    const popupButtonRow = document.getElementById("popupButtonRow");
     quizBanner.textContent = isCorrect ? "Correct!" : "Incorrect!";
     popupMessage.textContent = isCorrect
-      ? "Great job! You got it right."
-      : `The correct answer was: ${correct}`;
+      ? "You got it right!"
+      : `Oops, that's not correct. The answer is: ${correct}`;
     popup.classList.toggle("correct-answer", isCorrect);
     shareBtn.style.display = isCorrect ? "inline-block" : "none";
     document.querySelector(".share-text").style.display = isCorrect ? "block" : "none";
@@ -1697,7 +1693,12 @@
 
   async function loadComments() {
     try {
-      const response = await fetchWithRetry(`${COMMENT_URL}?action=getComments`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(`${COMMENT_URL}?action=getComments`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+      const response = await res.json();
       if (response.status === "success") {
         const comments = response.comments || [];
         document.getElementById("commentCount").textContent = comments.length;
