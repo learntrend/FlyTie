@@ -1300,7 +1300,7 @@
     const bookmarkMessage = document.getElementById("bookmarkMessage");
     const bookmarkNav = document.getElementById("bookmarkNav");
     if (bookmarkedPhrase) {
-      bookmarkMessage.textContent = `Your bookmarked phrase: ${bookmarkedPhrase}`;
+      bookmarkMessage.textContent = `${bookmarkedPhrase}`;
       bookmarkNav.style.display = "flex";
     } else {
       bookmarkMessage.textContent = "You haven't bookmarked any phrase yet.";
@@ -1654,8 +1654,8 @@
     const progressFill = document.getElementById("progressFill");
     quizBanner.textContent = isCorrect ? "Correct!" : "Incorrect!";
     popupMessage.textContent = isCorrect
-      ? "You got it right!"
-      : `Oops, that's not correct. The answer is: ${correct}`;
+      ? "Wohoo 🎉<br>You answered in ${timeTaken} seconds!!"
+      : `Oh oh.. Incorrect! 😔<br>Try again in 5 seconds!`;
     popup.classList.toggle("correct-answer", isCorrect);
     shareBtn.style.display = isCorrect ? "inline-block" : "none";
     document.querySelector(".share-text").style.display = isCorrect ? "block" : "none";
