@@ -1330,61 +1330,63 @@
     }
   }
 
-  async function toggleLikePhrase() {
-    const phrase = phrases[currentIndex]?.phrase;
-    if (!phrase) return;
-    const userId = generateUserId();
-    let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
-    const likeBtn = document.getElementById("likeBtn");
-    const isLiked = likedPhrases.includes(phrase);
-    const originalLikedPhrases = [...likedPhrases];
+
+async function toggleLikePhrase() {
+  const phrase = phrases[currentIndex]?.phrase;
+  if (!phrase) return;
+  const userId = generateUserId();
+  let likedPhrases = JSON.parse(localStorage.getItem("likedPhrases") || "[]");
+  const likeBtn = document.getElementById("likeBtn");
+  const isLiked = likedPhrases.includes(phrase);
+  const originalLikedPhrases = [...likedPhrases];
+  if (isLiked) {
+    likedPhrases = likedPhrases.filter((p) => p !== phrase);
+    likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+    likeBtn.classList.remove("liked-anim");
+  } else {
+    likedPhrases.push(phrase);
+    likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+    likeBtn.classList.add("liked-anim");
+    setTimeout(() => likeBtn.classList.remove("liked-anim"), 300);
+  }
+  localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
+  try {
+    const action = isLiked ? "removeLike" : "addLike";
+    const response = await fetchWithRetry(`${COMMENT_URL}?action=${action}`, {
+      method: "POST",
+      body: new URLSearchParams({
+        phrase: phrase,
+        userId: userId,
+      }),
+    });
+    if (response.status !== "success") {
+      throw new Error(response.message || `Failed to ${isLiked ? "unlike" : "like"} phrase`);
+    }
+    if (localStorage.getItem("cookieConsent") === "accepted") {
+      gtag("event", isLiked ? "unlike_phrase" : "like_phrase", {
+        phrase: phrase,
+        event_category: "engagement",
+        event_label: isLiked ? "Phrase Unliked" : "Phrase Liked",
+      });
+    }
+  } catch (e) {
+    console.error(`Error ${isLiked ? "unliking" : "liking"} phrase:`, e);
+    alert(`Failed to ${isLiked ? "unlike" : "like"} phrase: ` + e.message);
+    localStorage.setItem("likedPhrases", JSON.stringify(originalLikedPhrases));
     if (isLiked) {
-      likedPhrases = likedPhrases.filter((p) => p !== phrase);
-      likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-      likeBtn.classList.remove("liked-anim");
-    } else {
       likedPhrases.push(phrase);
       likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
       likeBtn.classList.add("liked-anim");
-      setTimeout(() => likeBtn.classList.remove("liked-anim"), 300);
+    } else {
+      likedPhrases = likedPhrases.filter((p) => p !== phrase);
+      likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+      likeBtn.classList.remove("liked-anim");
     }
     localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-    try {
-      const action = isLiked ? "removeLike" : "addLike";
-      const response = await fetchWithRetry(`${COMMENT_URL}?action=${action}`, {
-        method: "POST",
-        body: new URLSearchParams({
-          phrase: phrase,
-          userId: userId,
-        }),
-      });
-      if (response.status !== "success") {
-        throw new Error(response.message || `Failed to ${isLiked ? "unlike" : "like"} phrase`);
-      }
-      if (localStorage.getItem("cookieConsent") === "accepted") {
-        gtag("event", isLiked ? "unlike_phrase" : "like_phrase", {
-          phrase: phrase,
-          event_category: "engagement",
-          event_label: isLiked ? "Phrase Unliked" : "Phrase Liked",
-        });
-      }
-    } catch (e) {
-      console.error(`Error ${isLiked ? "unliking" : "liking"} phrase:`, e);
-      alert(`Failed to ${isLiked ? "unlike" : "like"} phrase: ` + e.message);
-      localStorage.setItem("likedPhrases", JSON.stringify(originalLikedPhrases));
-      if (isLiked) {
-        likedPhrases.push(phrase);
-        likeBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
-        likeBtn.classList.add("liked-anim");
-      } else {
-        likedPhrases = likedPhrases.filter((p) => p !== phrase);
-        likeBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
-        likeBtn.classList.remove("liked-anim");
-      }
-      localStorage.setItem("likedPhrases", JSON.stringify(likedPhrases));
-    }
-    updateLikeButton();
   }
+  updateLikeButton();
+}
+
 
   function toggleBookmark() {
     const phrase = phrases[currentIndex]?.phrase;
